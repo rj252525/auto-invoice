@@ -107,6 +107,11 @@
     box-shadow: var(--shadow-lg); background: var(--card);
   }
   .browser-frame img, .browser-frame video { width: 100%; height: auto; display: block; }
+  .video-frame {
+    border: 1px solid var(--border); border-radius: 14px; overflow: hidden;
+    box-shadow: var(--shadow-lg); background: var(--card);
+  }
+  .video-frame video { width: 100%; height: auto; display: block; }
 
   /* ── Sections ─────────────────────────────────────── */
   section { padding: 88px 0; border-top: 1px solid var(--border); }
@@ -204,6 +209,7 @@
   <div class="wrap nav-inner">
     <a class="brand" href="#"><img src="assets/icon.png" alt=""> Auto Invoice Generator</a>
     <div class="nav-links">
+      <a href="#demo">Demo</a>
       <a href="#privacy">Privacy</a>
       <a href="#ai">AI</a>
       <a href="#templates">Templates</a>
@@ -228,14 +234,30 @@
   </div>
   <div class="hero-shot">
     <div class="browser-frame">
+      <picture>
+        <source srcset="assets/app-dark.png" media="(prefers-color-scheme: dark)">
+        <img src="assets/app-light.png" alt="Auto Invoice Generator with a filled invoice and live PDF preview" width="1540" height="940">
+      </picture>
+    </div>
+  </div>
+</header>
+
+
+<section id="demo">
+  <div class="wrap">
+    <div class="kicker">See it work</div>
+    <h2>From a client email to a finished invoice in 40 seconds</h2>
+    <p class="lede">One unedited take: a messy client email goes in, the on-device AI reads it,
+    and a ready-to-send PDF comes out. No cloud, no API keys — this is the app doing exactly
+    what it does on your machine.</p>
+    <div class="video-frame">
       <video src="demo.mp4" poster="assets/app-light.png" autoplay muted loop playsinline controls
              width="1440" height="900"
              aria-label="40-second demo: a client email is turned into a finished invoice by on-device AI"></video>
     </div>
-    <p class="cta-note" style="text-align:center; margin-top:14px;">A real client email becoming a finished invoice — 40 seconds, unedited, AI running on-device.
-    <a href="demo.mp4">Direct link to the video</a>.</p>
+    <p class="cta-note" style="text-align:center; margin-top:16px;">Want to share it? <a href="demo.mp4">Direct link to the video</a>.</p>
   </div>
-</header>
+</section>
 
 <section id="privacy">
   <div class="wrap">
