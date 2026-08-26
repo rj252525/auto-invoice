@@ -106,7 +106,7 @@
     border-radius: 14px 14px 0 0; overflow: hidden;
     box-shadow: var(--shadow-lg); background: var(--card);
   }
-  .browser-frame img { width: 100%; display: block; }
+  .browser-frame img, .browser-frame video { width: 100%; height: auto; display: block; }
 
   /* ── Sections ─────────────────────────────────────── */
   section { padding: 88px 0; border-top: 1px solid var(--border); }
@@ -228,11 +228,12 @@
   </div>
   <div class="hero-shot">
     <div class="browser-frame">
-      <picture>
-        <source srcset="assets/app-dark.png" media="(prefers-color-scheme: dark)">
-        <img src="assets/app-light.png" alt="Auto Invoice Generator with a filled invoice and live PDF preview" width="1540" height="940">
-      </picture>
+      <video src="demo.mp4" poster="assets/app-light.png" autoplay muted loop playsinline controls
+             width="1440" height="900"
+             aria-label="40-second demo: a client email is turned into a finished invoice by on-device AI"></video>
     </div>
+    <p class="cta-note" style="text-align:center; margin-top:14px;">A real client email becoming a finished invoice — 40 seconds, unedited, AI running on-device.
+    <a href="demo.mp4">Direct link to the video</a>.</p>
   </div>
 </header>
 
