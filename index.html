@@ -100,6 +100,13 @@
   .sub { font-size: clamp(16px, 2vw, 19px); color: var(--text-2); max-width: 640px; margin: 0 auto 34px; }
   .cta-row { display: flex; gap: 14px; justify-content: center; align-items: center; flex-wrap: wrap; }
   .cta-note { font-size: 13.5px; color: var(--text-3); margin-top: 14px; }
+  .ph-badge { margin-top: 26px; display: flex; justify-content: center; }
+  .ph-badge img { display: block; }
+  .ph-dark { display: none; }
+  @media (prefers-color-scheme: dark) {
+    .ph-light { display: none; }
+    .ph-dark { display: inline; }
+  }
   .hero-shot { margin: 64px auto -2px; max-width: 1080px; padding: 0 24px; }
   .browser-frame {
     border: 1px solid var(--border); border-bottom: none;
@@ -231,6 +238,10 @@
       <a class="btn big ghost" href="#pricing">See pricing</a>
     </div>
     <p class="cta-note">Free 14-day trial · Every feature included · No sign-up required</p>
+    <div class="ph-badge">
+      <span class="ph-light"><a href="https://www.producthunt.com/products/auto-invoice-generator?embed=true&amp;utm_source=badge-featured&amp;utm_medium=badge&amp;utm_campaign=badge-auto-invoice-generator" target="_blank" rel="noopener noreferrer"><img alt="Auto Invoice Generator - Private invoicing with AI that runs on your device | Product Hunt" width="250" height="54" src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1233556&amp;theme=light&amp;t=1787830676459"></a></span>
+      <span class="ph-dark"><a href="https://www.producthunt.com/products/auto-invoice-generator?embed=true&amp;utm_source=badge-featured&amp;utm_medium=badge&amp;utm_campaign=badge-auto-invoice-generator" target="_blank" rel="noopener noreferrer"><img alt="Auto Invoice Generator - Private invoicing with AI that runs on your device | Product Hunt" width="250" height="54" src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1233556&amp;theme=dark&amp;t=1787830676459"></a></span>
+    </div>
   </div>
   <div class="hero-shot">
     <div class="browser-frame">
