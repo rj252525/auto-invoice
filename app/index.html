@@ -2319,7 +2319,7 @@ function aiRequiresLicense() {
 const TOUR_DONE_KEY = 'aiig-tour-done';
 const TOUR_STEPS = [
   { title: 'Welcome to Auto Invoice Generator',
-    body: 'Professional invoices with built-in AI that runs fully offline. This quick tour takes about 30 seconds — or skip it and dive right in.',
+    body: (WEB ? 'Professional invoices with built-in AI — nothing to install, nothing stored. ' : 'Professional invoices with built-in AI that runs fully offline. ') + 'This quick tour takes about 30 seconds — or skip it and dive right in.',
     target: null },
   { title: 'Start here',
     body: 'New Invoice starts fresh, Load Sample fills realistic example data so you can explore, and Clear Form resets everything.',
@@ -2331,7 +2331,7 @@ const TOUR_STEPS = [
     body: 'Preview renders your actual PDF as page images on the right. Export PDF saves the finished document wherever you choose. Auto Generate from Doc lets the AI build the invoice from an uploaded file.',
     target: '.toolbar' },
   { title: 'Your AI assistant',
-    body: 'Ask AI drafts notes and line items, AI Fill All walks you through a quick guided fill, Auto Generate from Doc reads an uploaded file and fills the invoice for you. Local models are optional — download one here to run AI fully offline.',
+    body: 'Ask AI drafts notes and line items, AI Fill All walks you through a quick guided fill, Auto Generate from Doc reads an uploaded file and fills the invoice for you. ' + (WEB ? 'On the web you get a few free AI extractions a day — the desktop app runs the AI privately on your own computer, without limits.' : 'Local models are optional — download one here to run AI fully offline.'),
     target: '#navAI' },
   { title: 'Make it yours',
     body: 'Four invoice templates, six paper colors, currencies including custom ones, tax rate and default hours — every choice here is saved and restored automatically.',
