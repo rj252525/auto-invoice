@@ -117,13 +117,15 @@
   .tier-pill { background: var(--card); border: 1px solid var(--border); border-radius: 999px; padding: 6px 13px; }
   .tier-up { border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); }
   .tier-up a { font-weight: 700; }
-  .hero-app { margin: 14px auto 0; max-width: 1320px; padding: 0 24px; }
+  .hero-app { margin: 30px auto 0; max-width: 1320px; padding: 0 24px; }
   .app-frame {
     border: 1px solid var(--border); border-radius: 14px; overflow: hidden;
     background: var(--card);
     height: 86vh; min-height: 660px; max-height: 1000px;
     box-shadow:
       0 0 0 1px rgba(22,35,59,.06),
+      0 0 36px 2px rgba(22,35,59,.16),          /* even ambient — reaches the top edge */
+      0 -18px 40px -12px rgba(22,35,59,.26),    /* cast upward */
       0 12px 24px -8px rgba(22,35,59,.28),
       0 40px 90px -20px rgba(22,35,59,.45),
       0 80px 140px -40px rgba(36,87,214,.22);
@@ -132,6 +134,8 @@
     .app-frame {
       box-shadow:
         0 0 0 1px rgba(255,255,255,.06),
+        0 0 36px 2px rgba(0,0,0,.5),
+        0 -18px 40px -12px rgba(0,0,0,.6),
         0 12px 24px -8px rgba(0,0,0,.6),
         0 40px 90px -20px rgba(0,0,0,.85),
         0 80px 140px -40px rgba(115,152,242,.25);
