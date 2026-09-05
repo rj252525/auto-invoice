@@ -107,7 +107,17 @@
     .ph-light { display: none; }
     .ph-dark { display: inline; }
   }
-  .hero-app { margin: 56px auto 0; max-width: 1320px; padding: 0 24px; }
+  .tier-strip { max-width: 1320px; margin: 52px auto 0; padding: 0 24px; scroll-margin-top: 80px; }
+  .tier-inner {
+    display: flex; flex-wrap: wrap; gap: 8px 10px; justify-content: center; align-items: center;
+    background: var(--pill); border: 1px solid var(--border); border-radius: 14px; padding: 12px 16px;
+    font-size: 13.5px; color: var(--text-2);
+  }
+  .tier-label { font-weight: 800; color: var(--ink); margin-right: 4px; }
+  .tier-pill { background: var(--card); border: 1px solid var(--border); border-radius: 999px; padding: 6px 13px; }
+  .tier-up { border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); }
+  .tier-up a { font-weight: 700; }
+  .hero-app { margin: 14px auto 0; max-width: 1320px; padding: 0 24px; }
   .app-frame {
     border: 1px solid var(--border); border-radius: 14px; overflow: hidden;
     box-shadow: var(--shadow-lg); background: var(--card);
@@ -117,7 +127,7 @@
   .app-note { text-align: center; margin-top: 14px; margin-bottom: 56px; }
   .hero-shot-mobile { display: none; }
   @media (max-width: 960px) {
-    .app-frame, .app-note { display: none; }
+    .app-frame, .app-note, .tier-strip { display: none; }
     .hero-shot-mobile { display: block; margin-top: 0; }
   }
   .hero-shot { margin: 64px auto -2px; max-width: 1080px; padding: 0 24px; }
@@ -257,7 +267,16 @@
       <span class="ph-dark"><a href="https://www.producthunt.com/products/auto-invoice-generator?embed=true&amp;utm_source=badge-featured&amp;utm_medium=badge&amp;utm_campaign=badge-auto-invoice-generator" target="_blank" rel="noopener noreferrer"><img alt="Auto Invoice Generator - Private invoicing with AI that runs on your device | Product Hunt" width="250" height="54" src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1233556&amp;theme=dark&amp;t=1787830676459"></a></span>
     </div>
   </div>
-  <div class="hero-app" id="try">
+  <div class="tier-strip" id="try">
+    <div class="tier-inner">
+      <span class="tier-label">The free web app:</span>
+      <span class="tier-pill">No account, nothing stored</span>
+      <span class="tier-pill">PDFs carry a small "Made with autoinvoicegen.com" line</span>
+      <span class="tier-pill">5 AI extractions a day</span>
+      <span class="tier-pill tier-up"><a href="#pricing">A license</a> removes the line, raises the AI limit, and unlocks the desktop app</span>
+    </div>
+  </div>
+  <div class="hero-app">
     <div class="app-frame">
       <iframe src="/app/" title="Auto Invoice Generator — make an invoice right here" allow="clipboard-write"></iframe>
     </div>
