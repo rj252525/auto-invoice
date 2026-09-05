@@ -27,20 +27,28 @@
 <div class="wrap">
 <a class="back" href="index.html">← Auto Invoice Generator</a>
 <h1>Privacy Policy</h1>
-<div class="updated">Last updated: August 22, 2026</div>
+<div class="updated">Last updated: August 27, 2026</div>
 
-<p>Auto Invoice Generator is built local-first: the app is designed so that your business data never
-needs to leave your computer. This policy explains, plainly, what the software does and doesn't do
-with data.</p>
+<p>Auto Invoice Generator comes in two forms with one rule: <b>we never store your data.</b> The desktop
+app keeps everything on your computer; the web version processes your invoice on our server only for
+as long as it takes to answer, then keeps nothing. This policy explains, plainly, what each does.</p>
 
-<h2>What stays on your device</h2>
+<h2>The web version (autoinvoicegen.com/app)</h2>
+<ul>
+<li><strong>Stateless by design</strong> — invoice details, uploaded documents, and generated PDFs are processed in memory on our server (hosted on Fly.io in the United States) and discarded as soon as the response is sent. They are not written to disk, logged, or retained. There are no accounts and no database.</li>
+<li><strong>AI extraction</strong> — when you use the AI, the text of your document is sent to Anthropic's API to produce the extraction and is handled under Anthropic's API data policy. We keep no copy.</li>
+<li><strong>Abuse limits</strong> — to keep the free service free, we count requests per network address in memory for up to 24 hours. This is a counter, not a record of what you did.</li>
+<li><strong>License keys</strong> — if you enter one, it is sent with your requests so we can remove the attribution footer and raise your AI limit. We verify it with our licensing provider, Polar, and remember only a hashed form for a few minutes. Your browser stores the key locally so you don't have to re-enter it.</li>
+</ul>
+
+<h2>The desktop app — what stays on your device</h2>
 <ul>
 <li><strong>Invoices and client details</strong> — everything you type into the app is stored only on your computer. There are no accounts and no sync servers.</li>
 <li><strong>AI processing</strong> — the built-in assistant runs open-weights AI models locally on your hardware. Documents you give it and text you type are processed on your machine and are never sent to us or to any AI provider.</li>
 <li><strong>Settings and drafts</strong> — stored locally by the app.</li>
 </ul>
 
-<h2>The few network connections the app makes</h2>
+<h2>The few network connections the desktop app makes</h2>
 <ul>
 <li><strong>Optional AI model download</strong> — if you choose to enable AI, the app downloads a model file from a public model repository (e.g. Hugging Face). This is a plain file download; no personal data is sent.</li>
 <li><strong>License activation</strong> — when you activate, the app sends your license key and an anonymous device identifier (a one-way hash; it does not reveal your hardware or identity) to our licensing provider, Lemon Squeezy, to validate the key. Periodic revalidation sends the same.</li>

@@ -1,0 +1,2415 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<script>window.__WEB_MODE__ = { api: "https://autoinvoicegen-api.fly.dev" };</script>
+<link rel="icon" type="image/png" href="/assets/icon.png">
+<meta name="description" content="Free online invoice generator with AI — nothing to install, no account. Your data is processed, never stored.">
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Auto Invoice Generator</title>
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   Invoice Generator — application stylesheet
+   Design: the app wears the same identity as the invoices it produces —
+   Schibsted Grotesk, slate ink, layered paper grounds, one cobalt accent.
+   Amber is reserved for the 1-Hour billing state (as on the PDF).
+   ═══════════════════════════════════════════════════════════════════ */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-font-smoothing: antialiased; font-size: 15px; height: 100%; }
+
+@font-face {
+  font-family: 'Schibsted Grotesk';
+  src: url('assets/fonts/schibsted-grotesk-var.ttf') format('truetype');
+  font-weight: 400 900;
+  font-display: swap;
+}
+
+:root {
+  --font: 'Schibsted Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+
+  /* grounds: sidebar (deepest) → app ground → white cards */
+  --bg: #F2F4F7;
+  --win-bg: rgba(255,255,255,0.86);          /* translucent surface (AI drawer) */
+  --sidebar-bg: #E9EDF2;
+  --sidebar-border: rgba(16,24,40,0.08);
+  --titlebar-bg: #E9EDF2;
+  --titlebar-border: rgba(16,24,40,0.08);
+  --toolbar-bg: #F8FAFC;
+  --toolbar-border: rgba(16,24,40,0.08);
+  --panel-bg: #FFFFFF;
+  --surface: #FFFFFF;
+  --surface-hover: rgba(16,24,40,0.055);
+  --preview-bg: #E3E7EE;
+
+  --border: rgba(16,24,40,0.11);
+  --border-strong: rgba(16,24,40,0.22);
+  --text: #0D1522;
+  --text-2: #33415A;
+  --text-3: #5C6980;
+
+  --accent: #2457D6;
+  --accent-hover: #1B46B5;
+  --accent-light: rgba(36,87,214,0.10);
+  --success: #148452;
+  --warning: #C2410C;
+  --danger: #D92D20;
+
+  --input-bg: #FFFFFF;
+  --input-border: rgba(16,24,40,0.17);
+  --scrollbar: rgba(16,24,40,0.18);
+  --tag-bg: rgba(36,87,214,0.10);
+  --tag-text: #1D49BD;
+
+  --ring: 0 0 0 3px rgba(36,87,214,0.16);
+  --shadow-1: 0 1px 2px rgba(16,24,40,0.05);
+  --shadow-2: 0 8px 24px -6px rgba(16,24,40,0.16), 0 2px 6px rgba(16,24,40,0.08);
+  --toast-bg: #1C2534;
+}
+
+[data-theme="dark"] {
+  --bg: #10151D;
+  --win-bg: rgba(23,30,40,0.92);
+  --sidebar-bg: #0B1017;
+  --sidebar-border: rgba(255,255,255,0.07);
+  --titlebar-bg: #0B1017;
+  --titlebar-border: rgba(255,255,255,0.07);
+  --toolbar-bg: #131A24;
+  --toolbar-border: rgba(255,255,255,0.07);
+  --panel-bg: #171E29;
+  --surface: #171E29;
+  --surface-hover: rgba(255,255,255,0.06);
+  --preview-bg: #0B0F15;
+
+  --border: rgba(255,255,255,0.09);
+  --border-strong: rgba(255,255,255,0.2);
+  --text: #EDF1F7;
+  --text-2: #C0CAD9;
+  --text-3: #8C99AD;
+
+  --accent: #7398F2;
+  --accent-hover: #8FACF6;
+  --accent-light: rgba(115,152,242,0.14);
+  --success: #3CCB7F;
+  --warning: #EC8A44;
+  --danger: #F97066;
+
+  --input-bg: #101720;
+  --input-border: rgba(255,255,255,0.15);
+  --scrollbar: rgba(255,255,255,0.18);
+  --tag-bg: rgba(115,152,242,0.15);
+  --tag-text: #9AB4F7;
+
+  --ring: 0 0 0 3px rgba(115,152,242,0.22);
+  --shadow-1: 0 1px 2px rgba(0,0,0,0.3);
+  --shadow-2: 0 10px 28px -6px rgba(0,0,0,0.5), 0 2px 6px rgba(0,0,0,0.35);
+  --toast-bg: #232E41;
+}
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  height: 100%;
+  transition: background 0.3s;
+}
+
+button { font-family: var(--font); }
+/* Hidden by stylesheet, not by its style attribute: inline styles are the
+   first casualty of any CSP tightening, and this input must never render —
+   the Import buttons proxy clicks to it. */
+#docFileInput { display: none; }
+:focus-visible { outline: none; box-shadow: var(--ring); }
+::selection { background: var(--accent-light); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+}
+
+/* The app IS the window — it fills the native frame edge to edge. */
+.window {
+  width: 100%;
+  height: 100%;
+  background: var(--bg);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+
+/* App header — macOS shell only: hosts the native traffic lights
+   (titleBarStyle Overlay) and acts as the drag region. */
+.titlebar {
+  display: none;
+  height: 40px;
+  background: var(--titlebar-bg);
+  border-bottom: 1px solid var(--titlebar-border);
+  align-items: center;
+  padding: 0 10px 0 84px;   /* left inset clears the native traffic lights */
+  gap: 8px;
+  flex-shrink: 0; user-select: none;
+}
+html.shell-mac .titlebar { display: flex; }
+html.shell-mac .toolbar .js-theme-toggle { display: none; }
+/* Hosted web app: no local engine to pick, no per-device activation. */
+html.web #modelSelect, html.web #modelSetup, html.web .lic-mid { display: none !important; }
+.web-upsell { display: none; }
+html.web .web-upsell { display: block; margin: 4px 16px 10px; font-size: 11.5px; line-height: 1.4; color: var(--accent); }
+.titlebar-title {
+  flex: 1; text-align: left;
+  font-size: 13px; font-weight: 600; letter-spacing: 0.01em;
+  color: var(--text-2);
+}
+.btn-theme {
+  background: none; border: none; width: 26px; height: 26px;
+  border-radius: 6px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-3); transition: background 0.15s, color 0.15s;
+}
+.btn-theme:hover { background: var(--surface-hover); color: var(--text); }
+.btn-theme svg { width: 14px; height: 14px; }
+
+/* ── App body ─────────────────────────────────────────────────────── */
+.app-body { display: flex; flex: 1; overflow: hidden; }
+
+/* Sidebar */
+.sidebar {
+  width: 216px; flex-shrink: 0;
+  background: var(--sidebar-bg);
+  border-right: 1px solid var(--sidebar-border);
+  display: flex; flex-direction: column;
+  padding: 10px 0; overflow-y: auto;
+}
+.brand {
+  display: flex; align-items: center; gap: 9px;
+  padding: 6px 16px 14px;
+  user-select: none;
+}
+.brand-mark {
+  width: 26px; height: 26px; border-radius: 7px;
+  background: linear-gradient(160deg, var(--accent), var(--accent-hover));
+  color: #fff; display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow-1);
+  flex-shrink: 0;
+}
+.brand-mark svg { width: 14px; height: 14px; }
+.brand-name {
+  font-size: 13px; font-weight: 700; letter-spacing: -0.01em;
+  color: var(--text);
+  line-height: 1.15;
+}
+.sidebar-header {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.09em; color: var(--text-3);
+  padding: 6px 16px 4px;
+}
+.sidebar-item {
+  display: flex; align-items: center; gap: 9px;
+  padding: 6px 9px; margin: 1px 8px;
+  border-radius: 7px; cursor: pointer;
+  font-size: 13px; font-weight: 500; color: var(--text-2);
+  transition: background 0.12s, color 0.12s;
+  border: none; background: none; width: calc(100% - 16px); text-align: left;
+}
+.sidebar-item:hover { background: var(--surface-hover); color: var(--text); }
+.sidebar-item.active { background: var(--accent-light); color: var(--accent); font-weight: 600; }
+.sidebar-item svg { width: 15px; height: 15px; flex-shrink: 0; opacity: 0.72; }
+.sidebar-item.active svg { opacity: 1; }
+.sidebar-divider { height: 1px; background: var(--sidebar-border); margin: 8px 14px; }
+.sidebar-info {
+  padding: 4px 16px;
+  font-size: 11.5px; color: var(--text-3);
+  display: flex; align-items: center; gap: 6px;
+}
+
+/* First-run model bootstrap card */
+.ms-text { font-size: 11px; color: var(--text-3); line-height: 1.45; margin-bottom: 6px; }
+.ms-btn { width: 100%; justify-content: center; height: 28px; font-size: 12px; }
+.ms-bar {
+  height: 6px; border-radius: 100px; overflow: hidden;
+  background: rgba(16,24,40,0.12); margin-bottom: 5px;
+}
+[data-theme="dark"] .ms-bar { background: rgba(255,255,255,0.12); }
+.ms-bar i {
+  display: block; height: 100%; width: 0%;
+  background: var(--accent); border-radius: 100px;
+  transition: width 0.3s ease;
+}
+.ms-label { font-size: 10.5px; color: var(--text-3); font-variant-numeric: tabular-nums; }
+
+/* ── Guided tour (first-run onboarding) ─────────────────────────── */
+#tourOverlay { position: fixed; inset: 0; z-index: 800; display: none; }
+#tourOverlay.on { display: block; }
+#tourOverlay.dim { background: rgba(11,16,26,0.55); }
+#tourOverlay.dim #tourRing { display: none; }
+#tourRing {
+  position: fixed; pointer-events: none;
+  border: 2px solid var(--accent); border-radius: 10px;
+  box-shadow: 0 0 0 9999px rgba(11,16,26,0.55), 0 0 0 5px var(--accent-light);
+  transition: top .28s ease, left .28s ease, width .28s ease, height .28s ease;
+}
+.tour-card {
+  position: fixed; z-index: 810; width: 300px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 15px 16px 13px;
+  box-shadow: var(--shadow-2);
+  transition: top .28s ease, left .28s ease;
+}
+.tour-title { font-size: 13.5px; font-weight: 700; color: var(--text); margin-bottom: 5px; letter-spacing: -0.01em; }
+.tour-body { font-size: 12.5px; color: var(--text-2); line-height: 1.55; margin-bottom: 12px; }
+.tour-foot { display: flex; align-items: center; gap: 8px; }
+.tour-count { font-size: 10.5px; color: var(--text-3); font-variant-numeric: tabular-nums; flex: 1; }
+.tour-skip {
+  background: none; border: none; cursor: pointer; padding: 4px 6px;
+  font-size: 11.5px; color: var(--text-3); font-family: var(--font); border-radius: 5px;
+}
+.tour-skip:hover { color: var(--text); background: var(--surface-hover); }
+.tour-btn {
+  height: 27px; padding: 0 12px; border-radius: 7px; border: none; cursor: pointer;
+  font-size: 12px; font-weight: 600; font-family: var(--font);
+  background: var(--accent); color: #fff;
+}
+[data-theme="dark"] .tour-btn { color: #0B1017; }
+.tour-btn:hover { background: var(--accent-hover); }
+.tour-btn.ghost { background: var(--surface-hover); color: var(--text-2); font-weight: 500; }
+.tour-btn.ghost:hover { color: var(--text); }
+
+/* Main */
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+
+/* Toolbar */
+.toolbar {
+  height: 46px;
+  background: var(--toolbar-bg);
+  border-bottom: 1px solid var(--toolbar-border);
+  display: flex; align-items: center;
+  padding: 0 14px; gap: 6px; flex-shrink: 0;
+}
+.toolbar-sep { width: 1px; height: 20px; background: var(--border); margin: 0 4px; }
+.btn-tool {
+  height: 30px; padding: 0 12px;
+  border-radius: 7px; border: 1px solid var(--border);
+  background: var(--surface); font-size: 12.5px; font-weight: 500;
+  color: var(--text-2); cursor: pointer;
+  display: flex; align-items: center; gap: 6px;
+  box-shadow: var(--shadow-1);
+  transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.05s;
+  white-space: nowrap;
+}
+.btn-tool:hover { color: var(--text); border-color: var(--border-strong); }
+.btn-tool:active { transform: translateY(0.5px); }
+.btn-tool svg { width: 13px; height: 13px; }
+.btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+.btn-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); color: #fff; }
+[data-theme="dark"] .btn-primary { color: #0B1017; }
+[data-theme="dark"] .btn-primary:hover { color: #0B1017; }
+.model-badge {
+  font-size: 11px; font-weight: 600;
+  background: var(--tag-bg); color: var(--tag-text);
+  padding: 3px 10px; border-radius: 20px; cursor: pointer;
+  transition: opacity 0.15s;
+}
+.model-badge:hover { opacity: 0.8; }
+
+/* License card */
+.lic-row { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+.lic-badge {
+  font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
+  padding: 3px 10px; border-radius: 100px;
+  background: var(--surface-hover); color: var(--text-2);
+}
+.lic-badge.ok    { background: var(--ok-soft); color: var(--ok); }
+.lic-badge.trial { background: var(--accent-light); color: var(--tag-text); }
+.lic-badge.warn  { background: rgba(194,65,12,0.12); color: var(--warning); }
+.lic-detail { font-size: 12px; color: var(--text-3); }
+.lic-managed { font-size: 12.5px; color: var(--text-2); line-height: 1.5; }
+.lic-managed b { color: var(--text); font-weight: 600; }
+.lic-buy { display: inline-block; margin-top: 9px; font-size: 12px; color: var(--accent-bright); }
+.lic-mid {
+  display: flex; align-items: center; gap: 9px;
+  margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line, var(--border));
+}
+.lic-mid-label { font-size: 11px; font-weight: 600; color: var(--text-3); }
+.lic-mid code {
+  font-size: 12.5px; letter-spacing: 0.06em;
+  background: var(--surface-hover); padding: 3px 9px; border-radius: 6px;
+  color: var(--text); user-select: all;
+}
+.lic-mid-hint { font-size: 11px; color: var(--text-3); margin-top: 6px; }
+
+/* AI disclaimer banner */
+.ai-disclaimer {
+  display: none;
+  align-items: center; gap: 9px;
+  padding: 8px 14px;
+  background: rgba(194,65,12,0.09);
+  border-bottom: 1px solid rgba(194,65,12,0.25);
+  color: var(--warning);
+  font-size: 12.5px; font-weight: 500;
+  flex-shrink: 0;
+}
+.ai-disclaimer.on { display: flex; }
+.ai-disclaimer svg { width: 14px; height: 14px; flex-shrink: 0; }
+.ai-disclaimer span { flex: 1; }
+.ai-disclaimer button {
+  border: none; background: none; cursor: pointer; color: inherit;
+  font-size: 16px; line-height: 1; padding: 2px 6px; opacity: 0.65; border-radius: 5px;
+  font-family: var(--font);
+}
+.ai-disclaimer button:hover { opacity: 1; background: rgba(194,65,12,0.12); }
+
+/* Content */
+.content { display: flex; flex: 1; overflow: hidden; }
+
+/* Form panel */
+.form-panel {
+  flex: 1; min-width: 0; overflow-y: auto;
+  padding: 18px 22px 28px;
+  scrollbar-width: thin; scrollbar-color: var(--scrollbar) transparent;
+}
+.form-panel::-webkit-scrollbar { width: 6px; }
+.form-panel::-webkit-scrollbar-thumb { background: var(--scrollbar); border-radius: 3px; }
+
+/* Tabs — segmented control */
+.tabs-bar {
+  display: flex; gap: 2px;
+  background: rgba(16,24,40,0.07);
+  border-radius: 9px; padding: 3px; margin-bottom: 16px;
+}
+[data-theme="dark"] .tabs-bar { background: rgba(255,255,255,0.07); }
+.tab-btn {
+  flex: 1; padding: 6px; border-radius: 7px;
+  border: none; background: none; white-space: nowrap;
+  font-size: 12.5px; font-weight: 500; color: var(--text-3);
+  cursor: pointer; transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+}
+.tab-btn.active {
+  background: var(--surface); color: var(--text); font-weight: 600;
+  box-shadow: var(--shadow-1);
+}
+.tab-btn:hover:not(.active) { color: var(--text-2); }
+
+/* Cards */
+.form-card {
+  background: var(--panel-bg); border: 1px solid var(--border);
+  border-radius: 11px; padding: 15px 17px; margin-bottom: 12px;
+  box-shadow: var(--shadow-1);
+}
+.form-card-title {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.09em; color: var(--text-3); margin-bottom: 11px;
+}
+
+/* Grid */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+
+/* Fields */
+.field { display: flex; flex-direction: column; gap: 4px; }
+label { font-size: 11px; font-weight: 600; color: var(--text-3); letter-spacing: 0.02em; }
+input, textarea, select {
+  height: 31px; padding: 0 10px;
+  border-radius: 7px; border: 1px solid var(--input-border);
+  background: var(--input-bg); color: var(--text);
+  font-family: var(--font); font-size: 13px;
+  outline: none; transition: border-color 0.15s, box-shadow 0.15s;
+}
+textarea { height: auto; width: 100%; padding: 7px 10px; resize: vertical; min-height: 58px; line-height: 1.5; }
+select {
+  cursor: pointer; padding-right: 26px; appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2374809B'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 9px center;
+}
+input:focus, textarea:focus, select:focus {
+  border-color: var(--accent);
+  box-shadow: var(--ring);
+}
+input::placeholder, textarea::placeholder { color: var(--text-3); opacity: 0.75; }
+input[type="number"] { font-variant-numeric: tabular-nums; }
+
+/* Line items */
+.items-header {
+  display: grid; grid-template-columns: 1fr 76px 96px 96px 30px;
+  gap: 6px; font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.07em; color: var(--text-3); margin-bottom: 5px; padding: 0 2px;
+}
+.item-row {
+  display: grid; grid-template-columns: 1fr 76px 96px 96px 30px;
+  gap: 6px; align-items: center; margin-bottom: 5px;
+}
+.item-total {
+  font-size: 12.5px; font-weight: 600; color: var(--text-2);
+  text-align: right; padding: 0 3px; font-variant-numeric: tabular-nums;
+}
+.btn-icon {
+  width: 26px; height: 26px; border-radius: 6px; border: none;
+  background: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-3); transition: background 0.12s, color 0.12s;
+}
+.btn-icon:hover { background: rgba(217,45,32,0.1); color: var(--danger); }
+.btn-add-item {
+  width: 100%; margin-top: 6px; height: 31px;
+  border-radius: 7px; border: 1.5px dashed var(--border-strong);
+  background: none; cursor: pointer;
+  font-size: 12.5px; font-weight: 500; color: var(--text-3);
+  display: flex; align-items: center; justify-content: center; gap: 5px;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+.btn-add-item:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+
+/* Totals — set like the invoice's summary block */
+.totals-block {
+  margin-top: 10px; padding-top: 9px; border-top: 1px solid var(--border);
+  display: flex; flex-direction: column; align-items: flex-end; gap: 4px;
+}
+.totals-row { display: flex; gap: 10px; align-items: center; font-size: 12.5px; color: var(--text-2); }
+.totals-row span:first-child { width: 90px; text-align: right; color: var(--text-3); }
+.totals-row span:last-child { width: 96px; text-align: right; font-variant-numeric: tabular-nums; }
+.totals-row.total { font-weight: 700; font-size: 14px; color: var(--text); }
+.totals-row.total span:last-child {
+  border-top: 1.5px solid var(--text); padding-top: 4px; margin-top: 2px;
+}
+
+/* Service date calendar */
+.sd-hint { font-size: 12px; color: var(--text-3); margin-bottom: 8px; line-height: 1.5; }
+.sd-hint strong { color: var(--text-2); }
+.sd-defaults { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.sd-defaults label { margin: 0; }
+.sd-defaults input { width: 72px; text-align: center; }
+.calendar { user-select: none; max-width: 420px; }
+.cal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.cal-title { font-size: 13.5px; font-weight: 700; color: var(--text); letter-spacing: -0.01em; }
+.cal-nav {
+  width: 28px; height: 28px; padding: 0; border-radius: 7px;
+  border: 1px solid var(--border); background: var(--surface);
+  color: var(--text-2); font-size: 16px; line-height: 1; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow-1);
+  transition: background .12s, color .12s, border-color .12s;
+}
+.cal-nav:hover { border-color: var(--accent); color: var(--accent); }
+.cal-weekdays, .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.cal-weekdays { margin-bottom: 6px; }
+.cal-weekdays span {
+  text-align: center; font-size: 9.5px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .05em; color: var(--text-3);
+}
+.cal-day {
+  aspect-ratio: 1 / 1; padding: 0; border-radius: 8px; border: 1px solid transparent;
+  background: var(--surface-hover); color: var(--text-2);
+  font-family: var(--font); font-size: 12.5px; font-weight: 500; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-variant-numeric: tabular-nums;
+  transition: background .12s, color .12s, border-color .12s;
+}
+.cal-day:hover:not(.empty) { border-color: var(--accent); color: var(--accent); }
+.cal-day.empty { background: none; border: none; cursor: default; }
+.cal-day.today { border-color: var(--border-strong); }
+.cal-day.selected { background: var(--accent); color: #fff; font-weight: 700; border-color: var(--accent); }
+.cal-day.selected:hover { background: var(--accent-hover); color: #fff; }
+[data-theme="dark"] .cal-day.selected, [data-theme="dark"] .cal-day.selected:hover { color: #0B1017; }
+.sd-selected-head { display: flex; align-items: center; justify-content: space-between; margin: 16px 0 8px; }
+#sdCount { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--text-3); }
+.sd-clear { border: none; background: none; color: var(--danger); font-size: 12px; font-weight: 500; cursor: pointer; padding: 2px 4px; font-family: var(--font); border-radius: 4px; }
+.sd-clear:hover { text-decoration: underline; }
+.sd-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.sd-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--tag-bg); color: var(--tag-text);
+  font-size: 12px; font-weight: 500; padding: 4px 8px 4px 11px; border-radius: 100px;
+}
+.sd-chip button {
+  border: none; background: none; color: inherit; cursor: pointer;
+  font-size: 15px; line-height: 1; padding: 0; opacity: .55; font-family: var(--font);
+}
+.sd-chip button:hover { opacity: 1; }
+.sd-chip .sd-hours {
+  width: 44px; height: 20px; padding: 0 3px; text-align: right;
+  font-size: 11.5px; border-radius: 5px;
+  border: 1px solid transparent; background: rgba(255,255,255,0.55);
+  color: inherit; font-variant-numeric: tabular-nums;
+}
+[data-theme="dark"] .sd-chip .sd-hours { background: rgba(0,0,0,0.25); }
+.sd-chip .sd-hours:focus { border-color: var(--accent); box-shadow: none; }
+.sd-chip .sd-h { margin-left: -3px; opacity: 0.7; font-size: 11px; }
+
+/* Tab pages */
+.tab-page { display: none; }
+.tab-page.active { display: block; animation: tabIn 0.18s ease; }
+@keyframes tabIn { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
+
+/* Preview panel — reads as a PDF viewer */
+.preview-panel {
+  width: clamp(400px, 46%, 660px); flex-shrink: 0;
+  background: var(--preview-bg);
+  border-left: 1px solid var(--border);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.preview-header {
+  height: 36px; background: var(--toolbar-bg);
+  border-bottom: 1px solid var(--toolbar-border);
+  display: flex; align-items: center; padding: 0 12px;
+  font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--text-3);
+  gap: 7px; flex-shrink: 0;
+}
+.preview-iframe-wrap {
+  flex: 1; min-height: 0; overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+}
+.preview-pages {
+  width: 100%; height: 100%; overflow-y: auto;
+  padding: 18px;
+  display: flex; flex-direction: column; align-items: center; gap: 16px;
+  scrollbar-width: thin; scrollbar-color: var(--scrollbar) transparent;
+}
+.preview-pages::-webkit-scrollbar { width: 6px; }
+.preview-pages::-webkit-scrollbar-thumb { background: var(--scrollbar); border-radius: 3px; }
+.preview-page {
+  width: 100%; max-width: 580px; height: auto; display: block;
+  background: #fff; border-radius: 3px;
+  box-shadow: 0 1px 3px rgba(16,24,40,0.16), 0 10px 32px -10px rgba(16,24,40,0.28);
+}
+.preview-placeholder {
+  width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  flex-direction: column; gap: 12px; color: var(--text-3); font-size: 12.5px;
+}
+.preview-placeholder svg {
+  width: 46px; height: 46px; opacity: 0.9; padding: 11px;
+  color: var(--text-3);
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  box-shadow: var(--shadow-1);
+}
+
+/* ── AI Drawer ─────────────────────────────────────────────────────── */
+.ai-drawer {
+  position: absolute; bottom: 0; right: 14px;
+  width: 400px; max-height: 480px;
+  background: var(--win-bg);
+  backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--border);
+  border-bottom: none;
+  border-radius: 13px 13px 0 0;
+  box-shadow: var(--shadow-2);
+  display: flex; flex-direction: column;
+  transform: translateY(100%);
+  transition: transform 0.28s cubic-bezier(0.32,0.72,0,1);
+  z-index: 200;
+}
+.ai-drawer.open { transform: translateY(0); }
+.ai-drawer-header {
+  padding: 11px 13px 9px;
+  display: flex; align-items: center; gap: 7px;
+  border-bottom: 1px solid var(--border); flex-shrink: 0;
+}
+.ai-drawer-title { font-size: 13.5px; font-weight: 700; color: var(--text); flex: 1; letter-spacing: -0.01em; }
+.ai-drawer-header .btn-icon:hover { background: var(--surface-hover); color: var(--text); }
+
+/* AI messages */
+.ai-messages {
+  flex: 1; overflow-y: auto; padding: 11px 13px;
+  display: flex; flex-direction: column; gap: 8px;
+  scrollbar-width: thin;
+}
+.msg { max-width: 94%; font-size: 12.5px; line-height: 1.55; padding: 7px 11px; border-radius: 11px; }
+.msg-user { background: var(--accent); color: #fff; align-self: flex-end; border-radius: 11px 11px 4px 11px; }
+[data-theme="dark"] .msg-user { color: #0B1017; }
+.msg-ai   { background: var(--surface); color: var(--text); align-self: flex-start; border: 1px solid var(--border); border-radius: 11px 11px 11px 4px; white-space: pre-wrap; box-shadow: var(--shadow-1); }
+.msg-system { background: var(--surface-hover); color: var(--text-3); font-size: 11px; align-self: center; border-radius: 20px; padding: 3px 11px; text-align: center; }
+.msg-file { background: var(--accent-light); color: var(--tag-text); border: 1px solid var(--accent-light); align-self: flex-start; border-radius: 11px; font-size: 11.5px; }
+
+/* Typing */
+.typing-dot {
+  display: inline-block; width: 5px; height: 5px;
+  border-radius: 50%; background: var(--text-3); margin: 0 2px;
+  animation: blink 1.2s ease-in-out infinite;
+}
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes blink { 0%,80%,100% { opacity:0.2; } 40% { opacity:1; } }
+
+/* AI input row */
+.ai-toolbar {
+  padding: 7px 10px;
+  border-top: 1px solid var(--border);
+  display: flex; gap: 5px; align-items: center;
+  flex-shrink: 0;
+}
+.ai-input-row {
+  padding: 6px 10px 10px;
+  display: flex; gap: 6px; flex-shrink: 0;
+}
+.ai-input-row input { flex: 1; height: 32px; }
+.ai-send-btn {
+  height: 32px; padding: 0 14px;
+  border-radius: 7px; border: none;
+  background: var(--accent); color: #fff;
+  font-size: 13px; font-weight: 600; cursor: pointer;
+  transition: background 0.15s;
+}
+[data-theme="dark"] .ai-send-btn { color: #0B1017; }
+.ai-send-btn:hover { background: var(--accent-hover); }
+.ai-send-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* Field fill buttons inside messages */
+.fill-btn {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: var(--accent); color: #fff;
+  border: none; border-radius: 5px; padding: 3px 8px;
+  font-size: 11px; font-weight: 600; cursor: pointer;
+  margin: 4px 3px 0 0; transition: background 0.15s;
+}
+[data-theme="dark"] .fill-btn { color: #0B1017; }
+.fill-btn:hover { background: var(--accent-hover); }
+
+/* File upload / quick-action chips */
+.btn-file-upload {
+  height: 26px; padding: 0 9px;
+  border-radius: 100px; border: 1px solid var(--border);
+  background: var(--surface); font-size: 11.5px; font-weight: 500;
+  color: var(--text-2); cursor: pointer;
+  display: flex; align-items: center; gap: 4px;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+.btn-file-upload:hover { background: var(--accent-light); color: var(--tag-text); border-color: var(--accent); }
+.btn-file-upload svg { width: 12px; height: 12px; }
+
+/* Attached doc badge */
+.doc-badge {
+  display: flex; align-items: center; gap: 5px;
+  background: var(--accent-light); color: var(--tag-text);
+  border-radius: 6px; padding: 3px 8px; font-size: 11px; font-weight: 500;
+  cursor: default;
+}
+.doc-badge button {
+  background: none; border: none; cursor: pointer; color: inherit;
+  padding: 0; line-height: 1; font-size: 13px; opacity: 0.6;
+}
+.doc-badge button:hover { opacity: 1; }
+
+/* Toast — slate card with a status dot */
+.toasts { position: fixed; top: 14px; right: 14px; z-index: 9999; display: flex; flex-direction: column; gap: 6px; }
+.toast {
+  min-width: 220px; max-width: 340px; padding: 9px 14px 9px 30px; border-radius: 10px;
+  font-size: 12.5px; font-weight: 500; position: relative;
+  background: var(--toast-bg); color: #F4F7FB;
+  box-shadow: var(--shadow-2); animation: slideIn 0.2s ease;
+}
+.toast::before {
+  content: ""; position: absolute; left: 13px; top: 50%; margin-top: -3.5px;
+  width: 7px; height: 7px; border-radius: 50%;
+}
+.toast-success::before { background: #4ADE80; }
+.toast-error::before   { background: #F97066; }
+.toast-info::before    { background: #7DA6FF; }
+@keyframes slideIn { from { opacity:0; transform: translateX(14px); } to { opacity:1; } }
+
+/* Status dot */
+.status-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+.status-dot.ok   { background: var(--success); box-shadow: 0 0 0 2.5px rgba(20,132,82,0.2); }
+.status-dot.err  { background: var(--danger);  box-shadow: 0 0 0 2.5px rgba(217,45,32,0.2); }
+.status-dot.warn { background: var(--warning); box-shadow: 0 0 0 2.5px rgba(194,65,12,0.2); }
+</style>
+</head>
+<body>
+
+<div class="toasts" id="toasts"></div>
+
+<!-- Guided tour overlay -->
+<div id="tourOverlay">
+  <div id="tourRing"></div>
+  <div class="tour-card" id="tourCard">
+    <div class="tour-title" id="tourTitle"></div>
+    <div class="tour-body" id="tourBody"></div>
+    <div class="tour-foot">
+      <span class="tour-count" id="tourCount"></span>
+      <button type="button" class="tour-skip" onclick="endTour()">Skip tour</button>
+      <button type="button" class="tour-btn ghost" id="tourBack" onclick="tourStep(-1)">Back</button>
+      <button type="button" class="tour-btn" id="tourNext" onclick="tourStep(1)">Next</button>
+    </div>
+  </div>
+</div>
+<!-- Hidden file input -->
+<input type="file" id="docFileInput" style="display:none"
+  accept=".txt,.md,.csv,.json,.pdf,.png,.jpg,.jpeg,.webp,.docx"
+  onchange="handleDocUpload(this)">
+
+<div class="window">
+
+  <!-- App header (macOS shell only): hosts the native traffic lights and drags the window -->
+  <div class="titlebar" data-tauri-drag-region>
+    <span class="titlebar-title" data-tauri-drag-region>Auto Invoice Generator</span>
+    <button class="btn-theme js-theme-toggle" aria-label="Toggle theme">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+  </div>
+
+  <div class="app-body">
+
+    <!-- Sidebar -->
+    <nav class="sidebar">
+      <div class="brand">
+        <span class="brand-mark">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 7h6M9 11h6M9 15h4"/></svg>
+        </span>
+        <span class="brand-name">Auto Invoice<br>Generator</span>
+      </div>
+      <div id="navInvoice" style="padding:0 8px;margin-bottom:2px;">
+        <div class="sidebar-header">Invoice</div>
+        <button class="sidebar-item active" onclick="activateSidebarItem(this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 7h6M9 11h6M9 15h4"/></svg>
+          New Invoice
+        </button>
+        <button class="sidebar-item" onclick="activateSidebarItem(this);loadSample()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+          Load Sample
+        </button>
+        <button class="sidebar-item" onclick="activateSidebarItem(this);clearForm()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
+          Clear Form
+        </button>
+      </div>
+      <div class="sidebar-divider"></div>
+      <div id="navAI" style="padding:0 8px;margin-bottom:2px;">
+        <div class="sidebar-header">AI Assistant</div>
+        <button class="sidebar-item" onclick="activateSidebarItem(this);openAIDrawer()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01"/></svg>
+          Ask AI
+        </button>
+        <button class="sidebar-item" onclick="activateSidebarItem(this);fillAllFieldsWithAI()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          AI Fill All
+        </button>
+        <button class="sidebar-item" onclick="activateSidebarItem(this);pickDocument()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          Auto Generate from Doc
+        </button>
+      </div>
+      <a class="web-upsell" href="https://autoinvoicegen.com/#download" target="_blank" rel="noopener">Want unlimited, fully private AI? Get the desktop app →</a>
+      <div class="sidebar-divider"></div>
+      <div style="padding:0 8px;">
+        <div class="sidebar-header">AI Engine</div>
+        <div class="sidebar-info">
+          <span class="status-dot warn" id="ollamaStatusDot"></span>
+          <span id="ollamaStatusText" style="font-size:11.5px;">Checking...</span>
+        </div>
+        <div style="padding:4px 8px 6px;">
+          <select id="modelSelect" style="width:100%;font-size:12px;height:27px;" onchange="setModel(this.value)">
+            <option value="">Searching...</option>
+          </select>
+        </div>
+        <div id="modelSetup" style="display:none;padding:2px 16px 8px;">
+          <div class="ms-text" id="modelSetupText">Optional — run AI fully offline. Invoices work without it.</div>
+          <select id="modelCatalog" style="width:100%;font-size:12px;height:27px;margin-bottom:6px;" onchange="syncModelAction()"></select>
+          <button type="button" class="btn-tool ms-btn" id="modelSetupBtn" onclick="modelAction()">Download</button>
+          <div id="modelProgress" style="display:none;">
+            <div class="ms-bar"><i id="modelBarFill"></i></div>
+            <div class="ms-label" id="modelProgressLabel">Starting…</div>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main -->
+    <main class="main">
+
+      <!-- Toolbar -->
+      <div class="toolbar">
+        <div style="display:flex;gap:5px;align-items:center;">
+          <button class="btn-tool" onclick="generatePDF()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 16l4-4h-3V4h-2v8H8l4 4z"/><path d="M20 18H4"/></svg>
+            Export PDF
+          </button>
+          <button class="btn-tool btn-primary" onclick="previewInvoice()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12S4.5 5 12 5s11 7 11 7-3.5 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>
+            Preview
+          </button>
+        </div>
+        <div class="toolbar-sep"></div>
+        <button class="btn-tool" onclick="pickDocument()" title="Upload a document and the AI generates the invoice from it">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Auto Generate from Doc
+        </button>
+        <div id="attachedDocBadge" style="display:none;"></div>
+        <span style="flex:1;"></span>
+        <button class="btn-theme js-theme-toggle" aria-label="Toggle theme">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
+        <span class="model-badge" id="modelBadge" onclick="openAIDrawer()">AI</span>
+      </div>
+
+      <!-- AI disclaimer (shown after Auto Generate from Doc) -->
+      <div id="aiDisclaimer" class="ai-disclaimer" role="status">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span>AI can make mistakes — please inspect the invoice for correctness.</span>
+        <button type="button" onclick="hideAIDisclaimer()" aria-label="Dismiss">×</button>
+      </div>
+
+      <!-- Content -->
+      <div class="content">
+
+        <!-- Form Panel -->
+        <div class="form-panel">
+          <div class="tabs-bar">
+            <button class="tab-btn active" data-tab="details" onclick="switchTab(this)">Details</button>
+            <button class="tab-btn" data-tab="items" onclick="switchTab(this)">Line Items</button>
+            <button class="tab-btn" data-tab="dates" onclick="switchTab(this)">Service Dates</button>
+            <button class="tab-btn" data-tab="settings" onclick="switchTab(this)">Settings</button>
+          </div>
+
+          <!-- Tab: Details -->
+          <div class="tab-page active" id="tab-details">
+            <div class="form-card">
+              <div class="form-card-title">Invoice Info</div>
+              <div class="grid-3">
+                <div class="field"><label>Invoice #</label><input id="invoiceNumber" placeholder="INV-001" value="INV-001"></div>
+                <div class="field"><label>Date</label><input id="invoiceDate" type="date"></div>
+                <div class="field"><label>Due Date</label><input id="dueDate" type="date"></div>
+              </div>
+            </div>
+            <div class="grid-2" style="gap:12px;">
+              <div class="form-card" style="margin:0;">
+                <div class="form-card-title">From (Your Business)</div>
+                <div style="display:flex;flex-direction:column;gap:7px;">
+                  <div class="field"><label>Name / Company</label><input id="fromName" placeholder="Your Name or Company"></div>
+                  <div class="field"><label>Address</label><textarea id="fromAddress" rows="3" placeholder="123 Main St&#10;City, Province&#10;Postal Code"></textarea></div>
+                  <div class="field"><label>Email</label><input id="fromEmail" type="email" placeholder="you@example.com"></div>
+                  <div class="field"><label>Phone</label><input id="fromPhone" type="tel" placeholder="+1 (555) 000-0000"></div>
+                </div>
+              </div>
+              <div class="form-card" style="margin:0;">
+                <div class="form-card-title">Bill To (Client)</div>
+                <div style="display:flex;flex-direction:column;gap:7px;">
+                  <div class="field"><label>Name / Company</label><input id="toName" placeholder="Client Name or Company"></div>
+                  <div class="field"><label>Address</label><textarea id="toAddress" rows="3" placeholder="456 Client Ave&#10;City, Province&#10;Postal Code"></textarea></div>
+                  <div class="field"><label>Email</label><input id="toEmail" type="email" placeholder="client@example.com"></div>
+                  <div class="field"><label>Phone</label><input id="toPhone" type="tel" placeholder="+1 (555) 000-0000"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab: Line Items -->
+          <div class="tab-page" id="tab-items">
+            <div class="form-card">
+              <div class="form-card-title">Line Items</div>
+              <div class="items-header">
+                <span>Description</span>
+                <span style="text-align:right">Qty</span>
+                <span style="text-align:right">Unit Price</span>
+                <span style="text-align:right">Amount</span>
+                <span></span>
+              </div>
+              <div id="itemsContainer"></div>
+              <button class="btn-add-item" onclick="addItem()">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+                Add Line Item
+              </button>
+              <div class="totals-block">
+                <div class="totals-row"><span>Subtotal</span><span id="subtotalDisplay">$0.00</span></div>
+                <div class="totals-row" id="taxRow" style="display:none;"><span id="taxLabel">Tax</span><span id="taxDisplay">$0.00</span></div>
+                <div class="totals-row total"><span>Total</span><span id="totalDisplay">$0.00</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab: Service Dates -->
+          <div class="tab-page" id="tab-dates">
+            <div class="form-card">
+              <div class="form-card-title">Service Dates</div>
+              <p class="sd-hint">Click a day to add or remove it. New days start at the hours below; adjust any date's hours on its chip. Selected dates appear on the invoice.</p>
+              <div class="sd-defaults">
+                <label for="sdDefaultHours">Hours per new day (optional)</label>
+                <input type="number" id="sdDefaultHours" min="0.25" step="0.25" value="" placeholder="—" aria-label="Default hours for newly added days, optional">
+              </div>
+              <div class="calendar">
+                <div class="cal-header">
+                  <button type="button" class="cal-nav" onclick="changeCalMonth(-1)" aria-label="Previous month">‹</button>
+                  <span class="cal-title" id="calTitle"></span>
+                  <button type="button" class="cal-nav" onclick="changeCalMonth(1)" aria-label="Next month">›</button>
+                </div>
+                <div class="cal-weekdays"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div>
+                <div class="cal-grid" id="calGrid"></div>
+              </div>
+              <div class="sd-selected-head">
+                <span id="sdCount">No dates selected</span>
+                <button type="button" class="sd-clear" id="sdClearBtn" onclick="clearServiceDates()" style="display:none;">Clear all</button>
+              </div>
+              <div class="sd-chips" id="sdChips"></div>
+            </div>
+          </div>
+
+          <!-- Tab: Settings -->
+          <div class="tab-page" id="tab-settings">
+            <div class="form-card">
+              <div class="form-card-title">Template &amp; Paper</div>
+              <div class="grid-2">
+                <div class="field">
+                  <label for="templateSelect">Invoice design — click Preview to see it applied</label>
+                  <select id="templateSelect">
+                    <option value="slate" selected>Slate — clean &amp; modern (default)</option>
+                    <option value="classic">Classic — serif letterhead</option>
+                    <option value="ink">Ink — bold header band</option>
+                    <option value="ledger">Ledger — minimal bookkeeping</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="paperSelect">Paper color</label>
+                  <select id="paperSelect">
+                    <option value="white" selected>White (default)</option>
+                    <option value="cream">Cream — warm ivory</option>
+                    <option value="mist">Mist — cool grey</option>
+                    <option value="sage">Sage — soft green</option>
+                    <option value="blush">Blush — warm pink</option>
+                    <option value="sky">Sky — pale blue</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div class="form-card">
+              <div class="form-card-title">Invoice Settings</div>
+              <div class="grid-2">
+                <div class="field">
+                  <label>Currency</label>
+                  <select id="currency">
+                    <option value="USD">USD — US Dollar ($)</option>
+                    <option value="CAD" selected>CAD — Canadian Dollar (CA$)</option>
+                    <option value="EUR">EUR — Euro (€)</option>
+                    <option value="GBP">GBP — British Pound (£)</option>
+                    <option value="__custom__">Custom…</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label>Tax Rate (%)</label>
+                  <input id="taxRate" type="number" min="0" max="100" step="0.1" placeholder="0" value="0">
+                </div>
+                <div class="field" id="currencyCustomField" style="display:none;">
+                  <label for="currencyCustom">Custom currency code or symbol</label>
+                  <input id="currencyCustom" maxlength="8" placeholder="e.g. AUD, CHF, ₹">
+                </div>
+              </div>
+            </div>
+            <div class="form-card">
+              <div class="form-card-title">Notes / Payment Terms</div>
+              <textarea id="notes" rows="5" placeholder="Payment terms, bank details, or any other notes..."></textarea>
+            </div>
+            <div class="form-card">
+              <div class="form-card-title">License</div>
+              <div id="licenseBox">
+                <div class="lic-row">
+                  <span class="lic-badge" id="licBadge">Checking…</span>
+                  <span class="lic-detail" id="licDetail"></span>
+                </div>
+                <div id="licActivate">
+                  <div class="field" style="margin-top:10px;">
+                    <label for="licKeyInput">License key</label>
+                    <input id="licKeyInput" placeholder="XXXX-XXXX-XXXX-XXXX" autocomplete="off" spellcheck="false">
+                  </div>
+                  <button type="button" class="btn-tool btn-primary" style="align-self:flex-start;margin-top:8px;" id="licActivateBtn" onclick="activateLicense()">Activate</button>
+                  <a href="#" onclick="openPurchasePage(); return false;" class="lic-buy" id="licBuyLink" style="display:none;">Need a key? See plans &amp; purchase →</a>
+                </div>
+                <div id="licManage" style="display:none;margin-top:10px;">
+                  <div class="lic-managed" id="licManaged"></div>
+                  <button type="button" class="btn-tool" style="align-self:flex-start;margin-top:8px;" onclick="deactivateLicense()" id="licDeactivateBtn">Deactivate this device</button>
+                </div>
+                <div class="lic-mid">
+                  <span class="lic-mid-label">Machine ID</span>
+                  <code id="licMachineId">…</code>
+                  <button type="button" class="btn-tool" style="height:24px;font-size:11px;padding:0 9px;" onclick="copyMachineId()">Copy</button>
+                </div>
+                <div class="lic-mid-hint">Send this ID to support to receive an offline activation key for this computer.</div>
+              </div>
+            </div>
+            <div class="form-card">
+              <div class="form-card-title">Help</div>
+              <div class="field">
+                <label>New here? Replay the guided tour of the app's features.</label>
+                <button type="button" class="btn-tool" style="align-self:flex-start;" onclick="startTour()">Replay the tour</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Preview Panel -->
+        <div class="preview-panel">
+          <div class="preview-header">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/></svg>
+            PDF Preview
+          </div>
+          <div class="preview-iframe-wrap" id="previewWrap">
+            <div class="preview-placeholder">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 7h6M9 11h6M9 15h4"/></svg>
+              Click Preview to render
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /content -->
+
+      <!-- ── AI Drawer ──────────────────────────────────────────── -->
+      <div class="ai-drawer" id="aiDrawer">
+        <div class="ai-drawer-header">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--accent)"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01"/></svg>
+          <span class="ai-drawer-title">AI Assistant</span>
+          <span id="drawerModel" style="font-size:11px;color:var(--text-3);"></span>
+          <button class="btn-icon" onclick="closeAIDrawer()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+        <div class="ai-messages" id="aiMessages">
+          <div class="msg msg-system">Ask me to fill in fields, generate notes, analyze documents, or suggest line items.</div>
+        </div>
+        <!-- AI toolbar: doc attach + quick actions -->
+        <div class="ai-toolbar">
+          <button class="btn-file-upload" onclick="pickDocument()" title="Attach a document for the AI to analyze">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Attach File
+          </button>
+          <button class="btn-file-upload" onclick="fillAllFieldsWithAI()" title="Guided fill: answer a few questions and the form fills itself">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            Fill All
+          </button>
+          <button class="btn-file-upload" onclick="quickAsk('Suggest 3-5 professional line items for this invoice.')" title="AI suggests line items">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            Suggest Items
+          </button>
+          <button class="btn-file-upload" onclick="quickAsk('Write professional payment terms and notes for this invoice.')" title="AI writes notes">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            Write Notes
+          </button>
+        </div>
+        <div class="ai-input-row">
+          <input id="aiInput" placeholder="Ask AI anything about this invoice..." onkeydown="if(event.key==='Enter')sendAI()">
+          <button class="ai-send-btn" id="aiSendBtn" onclick="sendAI()">Send</button>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<script>
+// ─── Desktop backend bridge ───────────────────────────────────────────────────
+// Under the Tauri shell the backend is a loopback sidecar on a random port,
+// guarded by a per-launch bearer token the shell hands us over IPC. In browser
+// development (server.py with INVOICE_DEV_MODE=1) it is same-origin with no
+// token. apiFetch() hides the difference from the rest of the app.
+window.__BACKEND__ = { base: '', token: '' };
+// Shell platform classes: .shell-mac renders the in-app header that hosts the
+// native traffic lights (titleBarStyle Overlay); Windows/browser hide it.
+if (window.__TAURI__?.core?.invoke) {
+  document.documentElement.classList.add(
+    'shell', /Mac/.test(navigator.userAgent) ? 'shell-mac' : 'shell-other');
+}
+// Hosted web app (autoinvoicegen.com/app): the site injects window.__WEB_MODE__
+// = { api } before this script. Same UI, API over the network, license by key
+// header instead of per-device activation.
+const WEB = !!window.__WEB_MODE__;
+if (WEB) document.documentElement.classList.add('web');
+const WEB_LICENSE_KEY = 'aiig-web-license';
+if (WEB) document.addEventListener('DOMContentLoaded', () => {
+  const b = document.getElementById('licDeactivateBtn'); if (b) b.textContent = 'Remove key from this browser';
+  const li = document.getElementById('licKeyInput'); if (li) li.placeholder = 'Paste your license key';
+});
+function webLicenseKey() { try { return localStorage.getItem(WEB_LICENSE_KEY) || ''; } catch (_) { return ''; } }
+function maskKey(k) { return k.length > 8 ? k.slice(0, 4) + '…' + k.slice(-4) : '••••'; }
+// Shell diagnostics: surface webview failures in the shell's log — packaged
+// WKWebView has no console, so silent errors are otherwise invisible.
+function shellLog(message) {
+  try { window.__TAURI__?.core?.invoke('log_js', { message: String(message) }); } catch (_) {}
+}
+if (window.__TAURI__) {
+  window.addEventListener('error', e => shellLog(`js error: ${e.message} @ ${e.filename}:${e.lineno}`));
+  window.addEventListener('unhandledrejection', e => shellLog(`unhandled rejection: ${e.reason?.message || e.reason}`));
+  document.addEventListener('securitypolicyviolation', e =>
+    shellLog(`csp violation: ${e.violatedDirective} blocked ${e.blockedURI}`));
+}
+window.__BACKEND_READY__ = (async () => {
+  if (WEB) { window.__BACKEND__ = { base: window.__WEB_MODE__.api.replace(/\/$/, ''), token: '' }; return; }
+  if (window.__TAURI__?.core?.invoke) {
+    try {
+      window.__BACKEND__ = await window.__TAURI__.core.invoke('backend_info');
+      // Launch self-test: prove the webview can actually reach the backend —
+      // both a simple GET and an authed request (which adds a CORS preflight).
+      // Results land in the shell log on every start.
+      try {
+        const r = await fetch(window.__BACKEND__.base + '/api/health');
+        shellLog(`selftest: /api/health HTTP ${r.status}`);
+      } catch (e) {
+        shellLog(`selftest: /api/health FAILED — ${e.message || e}`);
+      }
+      try {
+        // Direct fetch on purpose: apiFetch awaits the very promise this
+        // self-test runs inside — using it here would deadlock startup.
+        const { base, token } = window.__BACKEND__;
+        const r = await fetch(base + '/api/llm/models',
+                              { headers: { 'Authorization': 'Bearer ' + token } });
+        shellLog(`selftest: authed /api/llm/models HTTP ${r.status}`);
+      } catch (e) {
+        shellLog(`selftest: authed /api/llm/models FAILED — ${e.message || e}`);
+      }
+    } catch (e) {
+      console.error('backend_info failed:', e);
+    }
+  }
+})();
+async function apiFetch(path, opts = {}) {
+  await window.__BACKEND_READY__;
+  const { base, token } = window.__BACKEND__;
+  const headers = new Headers(opts.headers || {});
+  if (token) headers.set('Authorization', 'Bearer ' + token);
+  if (WEB) { const k = webLicenseKey(); if (k) headers.set('X-License-Key', k); }
+  return fetch(base + path, { ...opts, headers });
+}
+// ─── First-run AI model bootstrap ─────────────────────────────────────────────
+// The shell owns the download (resumable, checksum-verified); the UI shows a
+// card in the AI Engine section with progress, then refreshes the model list
+// once the engine is handed to the backend.
+let modelStatusCache = null;
+async function refreshModelSetup() {
+  if (!window.__TAURI__?.core?.invoke) return;
+  try {
+    const s = await window.__TAURI__.core.invoke('model_status');
+    modelStatusCache = s;
+    const box = document.getElementById('modelSetup');
+    if (!s.engine_present) { box.style.display = 'none'; return; }
+    box.style.display = '';
+    const sel = document.getElementById('modelCatalog');
+    const keep = sel.value;
+    sel.innerHTML = s.models.map(m => {
+      const mark = m.active ? '● ' : (m.installed ? '✓ ' : '');
+      return `<option value="${m.id}">${mark}${m.display}</option>`;
+    }).join('');
+    if (keep && s.models.some(m => m.id === keep)) sel.value = keep;
+    else { const pick = s.models.find(m => m.active) || s.models[0]; if (pick) sel.value = pick.id; }
+    document.getElementById('modelProgress').style.display = s.downloading ? '' : 'none';
+    if (s.downloading) {
+      const dl = s.models.find(m => m.id === s.downloading_id);
+      document.getElementById('modelSetupText').textContent =
+        `Downloading ${dl ? dl.display : 'model'}…`;
+    } else {
+      document.getElementById('modelSetupText').textContent =
+        'Optional — run AI fully offline. Invoices work without it.';
+    }
+    syncModelAction();
+  } catch (_) {}
+}
+function syncModelAction() {
+  const s = modelStatusCache;
+  const btn = document.getElementById('modelSetupBtn');
+  if (!s) { btn.style.display = 'none'; return; }
+  if (s.downloading) { btn.style.display = 'none'; return; }
+  const m = s.models.find(x => x.id === document.getElementById('modelCatalog').value);
+  if (!m) { btn.style.display = 'none'; return; }
+  btn.style.display = '';
+  btn.disabled = false;
+  if (m.active) { btn.textContent = 'Active'; btn.disabled = true; }
+  else if (m.installed) { btn.textContent = 'Use this model'; }
+  else { btn.textContent = `Download (${(m.bytes / 1e9).toFixed(1)} GB)`; }
+}
+function modelAction() {
+  const s = modelStatusCache;
+  if (!s) return;
+  const id = document.getElementById('modelCatalog').value;
+  const m = s.models.find(x => x.id === id);
+  if (!m || m.active) return;
+  if (m.installed) {
+    document.getElementById('modelSetupText').textContent = 'Starting AI engine…';
+    document.getElementById('modelSetupBtn').style.display = 'none';
+    window.__TAURI__.core.invoke('set_active_model', { modelId: id })
+      .catch(e => { toast('Could not switch model: ' + e, 'error'); refreshModelSetup(); });
+  } else {
+    document.getElementById('modelSetupBtn').style.display = 'none';
+    document.getElementById('modelProgress').style.display = '';
+    document.getElementById('modelSetupText').textContent = `Downloading ${m.display}…`;
+    window.__TAURI__.core.invoke('start_model_download', { modelId: id })
+      .catch(e => { toast('Could not start download: ' + e, 'error'); refreshModelSetup(); });
+  }
+}
+// Safety net for missed engine events (e.g. the engine came up while the
+// webview was still loading): quietly poll until a provider reports models,
+// then refresh the sidebar once.
+async function watchEngine() {
+  if (!window.__TAURI__?.core?.invoke) return;
+  for (let i = 0; i < 100; i++) {
+    await new Promise(r => setTimeout(r, 3000));
+    if (ollamaOK && currentModel) return;      // sidebar is already healthy
+    try {
+      const r = await apiFetch('/api/llm/models');
+      if (r.ok) {
+        const d = await r.json();
+        if ((d.models || []).length) { checkOllama(); refreshModelSetup(); return; }
+      }
+    } catch (_) {}
+  }
+}
+if (window.__TAURI__?.event?.listen) {
+  const gb = b => (b / 1e9).toFixed(2);
+  window.__TAURI__.event.listen('model-download', e => {
+    const { received, total } = e.payload;
+    const pct = Math.min(100, Math.floor(received / total * 100));
+    document.getElementById('modelSetup').style.display = '';
+    document.getElementById('modelSetupBtn').style.display = 'none';
+    document.getElementById('modelProgress').style.display = '';
+    document.getElementById('modelBarFill').style.width = pct + '%';
+    document.getElementById('modelProgressLabel').textContent =
+      `${pct}% · ${gb(received)} / ${gb(total)} GB`;
+  });
+  window.__TAURI__.event.listen('model-verify', () => {
+    document.getElementById('modelSetupText').textContent = 'Verifying download…';
+  });
+  window.__TAURI__.event.listen('model-ready', () => {
+    document.getElementById('modelProgress').style.display = 'none';
+    document.getElementById('modelSetupText').textContent = 'Starting AI engine…';
+  });
+  window.__TAURI__.event.listen('engine-starting', () => {
+    const box = document.getElementById('modelSetup');
+    box.style.display = '';
+    document.getElementById('modelSetupBtn').style.display = 'none';
+    document.getElementById('modelSetupText').textContent = 'Starting AI engine…';
+  });
+  window.__TAURI__.event.listen('engine-ready', () => {
+    toast('AI engine ready', 'success');
+    refreshModelSetup();
+    checkOllama();
+  });
+  window.__TAURI__.event.listen('model-error', e => {
+    toast('AI setup: ' + (e.payload?.message || 'failed'), 'error');
+    refreshModelSetup();
+  });
+}
+
+// Blob-anchor downloads don't reliably work inside WKWebView, so the shell
+// exposes a native save dialog; the browser fallback keeps dev mode working.
+async function saveBlobAs(blob, filename) {
+  if (window.__TAURI__?.core?.invoke) {
+    const bytes = Array.from(new Uint8Array(await blob.arrayBuffer()));
+    return await window.__TAURI__.core.invoke('save_pdf', { fileName: filename, data: bytes });
+  }
+  const url = URL.createObjectURL(blob);
+  Object.assign(document.createElement('a'), { href: url, download: filename }).click();
+  return filename;
+}
+
+// ─── State ────────────────────────────────────────────────────────────────────
+let items = [];
+let itemCounter = 0;
+let currentModel = '';
+let ollamaOK = false;
+let drawerOpen = false;
+let attachedDoc = null; // { filename, text }
+let serviceDates = new Set();   // ISO 'YYYY-MM-DD' strings of selected service days
+let serviceHours = new Map();   // iso → billed hours for that day (user-editable)
+let calYear, calMonth;          // month (0-based) currently shown in the calendar
+
+// ─── Settings persistence ─────────────────────────────────────────────────────
+// Everything a user chooses in Settings (plus theme and default hours)
+// survives restart. Stored in the webview's localStorage, which Tauri keeps
+// in the app's data store — keyed to the bundle identifier.
+const SETTINGS_KEY = 'aiig-settings-v1';
+const PERSISTED_FIELDS = ['templateSelect', 'paperSelect', 'currency', 'currencyCustom',
+                          'taxRate', 'notes', 'sdDefaultHours'];
+function saveSettings() {
+  const data = { dark };
+  PERSISTED_FIELDS.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) data[id] = el.value;
+  });
+  try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(data)); } catch (_) {}
+}
+function loadSettings() {
+  let data = {};
+  try { data = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}') || {}; } catch (_) {}
+  PERSISTED_FIELDS.forEach(id => {
+    const el = document.getElementById(id);
+    if (el && data[id] != null && data[id] !== '') el.value = data[id];
+  });
+  if (typeof data.dark === 'boolean') { dark = data.dark; applyTheme(); }
+}
+// ─── Invoice draft persistence ────────────────────────────────────────────────
+// The last-filled invoice survives restarts until Clear Form is pressed.
+const DRAFT_KEY = 'aiig-draft-v1';
+let draftTimer = null;
+function scheduleDraftSave() { clearTimeout(draftTimer); draftTimer = setTimeout(saveDraft, 600); }
+function saveDraft() {
+  try { localStorage.setItem(DRAFT_KEY, JSON.stringify(collectForm())); } catch (_) {}
+}
+function clearDraft() {
+  try { localStorage.removeItem(DRAFT_KEY); } catch (_) {}
+}
+function loadDraft() {
+  try {
+    const d = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null');
+    return d && typeof d === 'object' ? d : null;
+  } catch (_) { return null; }
+}
+function applyDraft(d) {
+  const set = (id, v) => { const el = document.getElementById(id); if (el && v != null) el.value = v; };
+  set('fromName', d.from_name);   set('fromAddress', d.from_address);
+  set('fromEmail', d.from_email); set('fromPhone', d.from_phone);
+  set('toName', d.to_name);       set('toAddress', d.to_address);
+  set('toEmail', d.to_email);     set('toPhone', d.to_phone);
+  set('invoiceNumber', d.invoice_number);
+  set('invoiceDate', d.invoice_date); set('dueDate', d.due_date);
+  set('notes', d.notes); set('taxRate', d.tax_rate);
+  items = []; itemCounter = 0;
+  (d.items || []).forEach(it => items.push({
+    id: ++itemCounter,
+    desc: String(it.description || ''),
+    qty: parseFloat(it.quantity) || 0,
+    price: parseFloat(it.unit_price) || 0,
+  }));
+  renderItems();
+  serviceDates = new Set((d.service_dates || []).filter(s => /^\d{4}-\d{2}-\d{2}$/.test(s)));
+  serviceHours = new Map(Object.entries(d.service_hours || {})
+    .filter(([k, v]) => serviceDates.has(k) && parseFloat(v) > 0)
+    .map(([k, v]) => [k, parseFloat(v)]));
+  const first = sortedServiceDates()[0];
+  if (first) { calYear = +first.slice(0, 4); calMonth = +first.slice(5, 7) - 1; }
+}
+
+function syncCurrencyCustomVisibility() {
+  document.getElementById('currencyCustomField').style.display =
+    document.getElementById('currency').value === '__custom__' ? '' : 'none';
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  const today = new Date();
+  document.getElementById('invoiceDate').value = fmt(today);
+  document.getElementById('dueDate').value     = fmt(today);
+  loadSettings();
+  syncCurrencyCustomVisibility();
+  calYear = today.getFullYear(); calMonth = today.getMonth();
+  const draft = loadDraft();
+  if (draft) applyDraft(draft);          // restore the last-filled invoice
+  if (!items.length) addItem();
+  updateTotals();
+  renderCalendar(); renderServiceDateChips();
+  document.querySelector('.form-panel').addEventListener('input', scheduleDraftSave);
+  document.querySelector('.form-panel').addEventListener('change', scheduleDraftSave);
+  refreshLicense();
+  checkOllama();
+  refreshModelSetup();
+  watchEngine();
+  // First run only: offer the guided tour (skippable; replay in Settings).
+  try {
+    if (!localStorage.getItem(TOUR_DONE_KEY)) setTimeout(startTour, 700);
+  } catch (_) {}
+  document.getElementById('taxRate').addEventListener('input', updateTotals);
+  document.getElementById('currency').addEventListener('change', () => {
+    syncCurrencyCustomVisibility(); updateTotals();
+  });
+  document.getElementById('currencyCustom').addEventListener('input', updateTotals);
+  PERSISTED_FIELDS.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.addEventListener('change', saveSettings); el.addEventListener('input', saveSettings); }
+  });
+  window.addEventListener('resize', scalePreview);
+});
+function fmt(d) { return d.toISOString().split('T')[0]; }
+
+// ─── Theme ────────────────────────────────────────────────────────────────────
+let dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+applyTheme();
+document.querySelectorAll('.js-theme-toggle').forEach(b =>
+  b.addEventListener('click', () => { dark = !dark; applyTheme(); saveSettings(); }));
+function applyTheme() {
+  document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+  document.querySelectorAll('.js-theme-toggle').forEach(b => b.innerHTML = dark
+    ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>`
+    : `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`);
+}
+
+// ─── Tabs ─────────────────────────────────────────────────────────────────────
+function switchTab(btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-page').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+}
+
+// ─── Sidebar ──────────────────────────────────────────────────────────────────
+function activateSidebarItem(el) {
+  document.querySelectorAll('.sidebar-item').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// ─── Line Items ───────────────────────────────────────────────────────────────
+function addItem(desc='', qty=1, price=0) {
+  items.push({ id: ++itemCounter, desc, qty, price });
+  renderItems(); updateTotals();
+}
+function removeItem(id) { items = items.filter(i => i.id !== id); renderItems(); updateTotals(); }
+function renderItems() {
+  document.getElementById('itemsContainer').innerHTML = items.map(it => `
+    <div class="item-row">
+      <input value="${esc(it.desc)}" placeholder="Service or product description"
+        oninput="setItem(${it.id},'desc',this.value)">
+      <input type="number" value="${it.qty}" min="0" step="any" style="text-align:right"
+        oninput="setItem(${it.id},'qty',parseFloat(this.value)||0)">
+      <input type="number" value="${it.price}" min="0" step="0.01" style="text-align:right"
+        oninput="setItem(${it.id},'price',parseFloat(this.value)||0)">
+      <span class="item-total" id="it-${it.id}">${fmtCur(it.qty*it.price)}</span>
+      <button class="btn-icon" onclick="removeItem(${it.id})">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>`).join('');
+}
+function setItem(id, field, val) {
+  const it = items.find(i => i.id === id);
+  if (it) { it[field] = val; const el = document.getElementById('it-'+id); if(el) el.textContent = fmtCur(it.qty*it.price); }
+  updateTotals();
+}
+function updateTotals() {
+  const sub  = items.reduce((s,i) => s + i.qty*i.price, 0);
+  const rate = parseFloat(document.getElementById('taxRate').value) || 0;
+  const tax  = sub * rate / 100;
+  document.getElementById('subtotalDisplay').textContent = fmtCur(sub);
+  document.getElementById('totalDisplay').textContent    = fmtCur(sub + tax);
+  const taxRow = document.getElementById('taxRow');
+  if (rate > 0) {
+    taxRow.style.display = '';
+    document.getElementById('taxLabel').textContent = `Tax (${rate}%)`;
+    document.getElementById('taxDisplay').textContent = fmtCur(tax);
+  } else taxRow.style.display = 'none';
+  scheduleDraftSave();
+}
+function effectiveCurrency() {
+  const c = g('currency');
+  return c === '__custom__' ? (g('currencyCustom') || 'USD') : c;
+}
+function fmtCur(n) {
+  const c = effectiveCurrency();
+  const s = {USD:'$',CAD:'CA$',EUR:'€',GBP:'£'}[c] || c+' ';
+  return s + n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+}
+
+// ─── Service Dates (calendar) ───────────────────────────────────────────────
+function isoDate(y, m, d) { // m is 0-based
+  return `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+}
+function sortedServiceDates() { return [...serviceDates].sort(); }
+function fmtServiceDate(iso) {
+  const [y, m, d] = iso.split('-').map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString(undefined,
+    { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+}
+function renderCalendar() {
+  const grid = document.getElementById('calGrid');
+  if (!grid) return;
+  document.getElementById('calTitle').textContent =
+    new Date(calYear, calMonth, 1).toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+  const firstDow = new Date(calYear, calMonth, 1).getDay();        // 0 = Sun
+  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+  const now = new Date();
+  const todayIso = isoDate(now.getFullYear(), now.getMonth(), now.getDate());
+  let cells = '';
+  for (let i = 0; i < firstDow; i++) cells += '<div class="cal-day empty"></div>';
+  for (let d = 1; d <= daysInMonth; d++) {
+    const iso = isoDate(calYear, calMonth, d);
+    const cls = ['cal-day'];
+    if (serviceDates.has(iso)) cls.push('selected');
+    if (iso === todayIso) cls.push('today');
+    cells += `<button type="button" class="${cls.join(' ')}" onclick="onDayClick('${iso}')">${d}</button>`;
+  }
+  grid.innerHTML = cells;
+}
+function changeCalMonth(delta) {
+  calMonth += delta;
+  if (calMonth < 0) { calMonth = 11; calYear--; }
+  else if (calMonth > 11) { calMonth = 0; calYear++; }
+  renderCalendar();
+}
+// Single click toggles a date (2 Hours by default); triple-click marks it 1 Hour.
+function defaultHours() {
+  // Hours are OPTIONAL — null when the user left the default blank.
+  const v = parseFloat(document.getElementById('sdDefaultHours')?.value);
+  return v > 0 ? v : null;
+}
+function onDayClick(iso) {
+  if (serviceDates.has(iso)) { serviceDates.delete(iso); serviceHours.delete(iso); }
+  else {
+    serviceDates.add(iso);
+    const dh = defaultHours();
+    if (dh) serviceHours.set(iso, dh);
+  }
+  renderCalendar(); renderServiceDateChips();
+}
+function removeServiceDate(iso) { serviceDates.delete(iso); serviceHours.delete(iso); renderCalendar(); renderServiceDateChips(); }
+function clearServiceDates() { serviceDates.clear(); serviceHours.clear(); renderCalendar(); renderServiceDateChips(); }
+function setServiceHours(iso, value) {
+  const n = parseFloat(value);
+  if (n > 0) serviceHours.set(iso, n);
+  else serviceHours.delete(iso);   // cleared = no hours on this date
+  updateSdCount();   // text only — re-rendering chips here would steal input focus
+}
+function updateSdCount() {
+  const dates = sortedServiceDates();
+  const total = dates.reduce((s, iso) => s + (serviceHours.get(iso) || 0), 0);
+  document.getElementById('sdCount').textContent = dates.length
+    ? `${dates.length} date${dates.length > 1 ? 's' : ''}` + (total > 0 ? ` · ${+total.toFixed(2)} hours` : '')
+    : 'No dates selected';
+}
+function renderServiceDateChips() {
+  const dates = sortedServiceDates();
+  updateSdCount();
+  document.getElementById('sdClearBtn').style.display = dates.length ? '' : 'none';
+  document.getElementById('sdChips').innerHTML = dates.map(iso => {
+    const hrs = serviceHours.get(iso);
+    return `<span class="sd-chip">${fmtServiceDate(iso)}
+      <input class="sd-hours" type="number" min="0.25" step="0.25" value="${hrs ?? ''}" placeholder="—"
+        aria-label="Hours for ${iso}, optional" oninput="setServiceHours('${iso}', this.value)"><span class="sd-h">h</span>
+      <button type="button" onclick="removeServiceDate('${iso}')" aria-label="Remove ${iso}">×</button></span>`;
+  }).join('');
+  scheduleDraftSave();
+}
+
+// ─── Collect form ─────────────────────────────────────────────────────────────
+function collectForm() {
+  return {
+    invoice_number: g('invoiceNumber') || 'INV-001',
+    invoice_date:   g('invoiceDate')   || fmt(new Date()),
+    due_date:       g('dueDate')       || '',
+    from_name:      g('fromName')      || 'Your Company',
+    from_address:   g('fromAddress')   || '',
+    from_email:     g('fromEmail')     || '',
+    from_phone:     g('fromPhone')     || '',
+    to_name:        g('toName')        || 'Client',
+    to_address:     g('toAddress')     || '',
+    to_email:       g('toEmail')       || '',
+    to_phone:       g('toPhone')       || '',
+    items: items.map(i => ({ description: i.desc||'Service', quantity: i.qty, unit_price: i.price })),
+    notes:    g('notes')    || '',
+    tax_rate: parseFloat(g('taxRate')) || 0,
+    currency: effectiveCurrency() || 'CAD',
+    service_dates: sortedServiceDates(),
+    service_hours: Object.fromEntries([...serviceHours]
+      .filter(([iso, v]) => serviceDates.has(iso) && parseFloat(v) > 0)
+      .map(([iso, v]) => [iso, parseFloat(v)])),
+    template: g('templateSelect') || 'slate',
+    paper: g('paperSelect') || 'white'
+  };
+}
+function g(id) { return document.getElementById(id)?.value?.trim() || ''; }
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ─── Preview ──────────────────────────────────────────────────────────────────
+async function previewInvoice() {
+  // Rendered page images, not a PDF iframe: WKWebView can't display PDFs in
+  // iframes, and images behave identically on every platform.
+  try {
+    const r = await apiFetch('/api/preview', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(collectForm()) });
+    if (!r.ok) throw new Error(await r.text());
+    const { pages } = await r.json();
+    document.getElementById('previewWrap').innerHTML =
+      '<div class="preview-pages">' +
+      pages.map((p, i) => `<img class="preview-page" alt="Invoice page ${i+1}" src="data:image/png;base64,${p}">`).join('') +
+      '</div>';
+    toast('Preview updated','success');
+  } catch(e) { toast('Preview error: '+e.message,'error'); }
+}
+function scalePreview() { /* The preview iframe now fills the pane via CSS — no manual scaling needed. */ }
+
+// ─── Export PDF ───────────────────────────────────────────────────────────────
+async function generatePDF() {
+  const data = collectForm();
+  try {
+    const r = await apiFetch('/api/generate-pdf', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(data) });
+    if (!r.ok) throw new Error(await r.text());
+    const saved = await saveBlobAs(await r.blob(), `invoice-${data.invoice_number}.pdf`);
+    if (saved) toast(`Saved ${saved}`, 'success');
+  } catch(e) { toast('Export failed: '+e.message,'error'); }
+}
+
+// ─── Sample / Clear ───────────────────────────────────────────────────────────
+function loadSample() {
+  document.getElementById('fromName').value    = 'ABC Design Studio';
+  document.getElementById('fromAddress').value = '102 Pacific Blvd\nVancouver, BC\nV6Z 2V2';
+  document.getElementById('fromEmail').value   = 'hello@ABC.studio';
+  document.getElementById('fromPhone').value   = '+1 (604) 555-0142';
+  document.getElementById('toName').value      = 'Acme Health Corp';
+  document.getElementById('toAddress').value   = '900 W Georgia St\nVancouver, BC\nV6C 1E7';
+  document.getElementById('toEmail').value     = 'accounts@acmehealthcorp.ca';
+  document.getElementById('toPhone').value     = '+1 (604) 555-0199';
+  document.getElementById('invoiceNumber').value = 'INV-2024-042';
+  document.getElementById('taxRate').value     = '5';
+  document.getElementById('currency').value    = 'CAD';
+  document.getElementById('notes').value       = 'Payment due within 30 days of invoice date.\nPlease reference invoice number with payment.\nBank transfer preferred — details on file.';
+  items = []; itemCounter = 0;
+  addItem('Brand Identity Consultation', 3, 175);
+  addItem('Logo Design & Revisions (3 rounds)', 1, 850);
+  addItem('Social Media Asset Pack (10 templates)', 1, 420);
+  addItem('Final File Delivery (print + web)', 1, 150);
+  serviceDates = new Set(); serviceHours = new Map();
+  const sy = new Date().getFullYear(), sm = new Date().getMonth();
+  [3, 4, 5, 11, 12].forEach((d, i) => {
+    const iso = isoDate(sy, sm, d);
+    serviceDates.add(iso);
+    serviceHours.set(iso, i === 1 ? 1.5 : 2);   // one odd entry shows per-date hours
+  });
+  calYear = sy; calMonth = sm; renderCalendar(); renderServiceDateChips();
+  syncCurrencyCustomVisibility(); updateTotals(); toast('Sample data loaded','info');
+}
+function clearForm() {
+  ['fromName','fromAddress','fromEmail','fromPhone','toName','toAddress','toEmail','toPhone','notes']
+    .forEach(id => document.getElementById(id).value = '');
+  document.getElementById('taxRate').value = '0';
+  items = []; itemCounter = 0; addItem(); updateTotals();
+  serviceDates.clear(); serviceHours.clear(); renderCalendar(); renderServiceDateChips();
+  document.getElementById('previewWrap').innerHTML = `<div class="preview-placeholder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:34px;height:34px;opacity:.3"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 7h6M9 11h6M9 15h4"/></svg>Click Preview to render</div>`;
+  // Forget the remembered invoice — the next launch starts fresh.
+  clearTimeout(draftTimer); clearDraft();
+  hideAIDisclaimer();
+  toast('Form cleared','info');
+}
+
+// ─── Ollama ───────────────────────────────────────────────────────────────────
+async function checkOllama() {
+  const dot = document.getElementById('ollamaStatusDot');
+  const txt = document.getElementById('ollamaStatusText');
+  dot.className = 'status-dot warn'; txt.textContent = 'Connecting...';
+  try {
+    const r = await apiFetch('/api/llm/models');
+    if (!r.ok) throw new Error();
+    const data = await r.json();
+    const models = data.models || [];
+    ollamaOK = true;
+    dot.className = 'status-dot ok';
+    txt.textContent = `${models.length} model${models.length!==1?'s':''} ready`;
+    const sel = document.getElementById('modelSelect');
+    sel.innerHTML = models.length
+      ? models.map(m => `<option value="${m.name}">${m.name}</option>`).join('')
+      : `<option value="">No models available</option>`;
+    currentModel = models.length ? models[0].name : '';
+    updateModelBadge();
+  } catch {
+    ollamaOK = false;
+    dot.className = 'status-dot err';
+    txt.textContent = 'Not running';
+    document.getElementById('modelSelect').innerHTML = `<option value="">Engine offline</option>`;
+    currentModel = ''; updateModelBadge();
+  }
+}
+function setModel(v) { currentModel = v; updateModelBadge(); }
+function updateModelBadge() {
+  document.getElementById('modelBadge').textContent = currentModel || 'AI';
+  document.getElementById('drawerModel').textContent = currentModel || '';
+}
+
+// ─── Document Upload ──────────────────────────────────────────────────────────
+async function handleDocUpload(input) {
+  const file = input.files[0]; if (!file) return;
+  input.value = '';
+  await uploadDocument(file);
+}
+// In the shell, files are picked by a native dialog in the Rust core:
+// WKWebView's own <input type="file"> panel aborts the whole app when macOS
+// fails to hand it an NSOpenPanel. Browser dev keeps the plain input.
+async function pickDocument() {
+  if (window.__TAURI__?.core?.invoke) {
+    try {
+      const res = await window.__TAURI__.core.invoke('pick_document');
+      if (!res) return;   // user cancelled the dialog
+      await uploadDocument(new File([new Uint8Array(res.data)], res.name));
+    } catch (e) { toast('Import failed: ' + e, 'error'); }
+  } else {
+    document.getElementById('docFileInput').click();
+  }
+}
+async function uploadDocument(file) {
+  const fd = new FormData(); fd.append('file', file);
+  toast(`Reading ${file.name}...`, 'info');
+  try {
+    const r = await apiFetch('/api/upload-document', { method:'POST', body: fd });
+    if (!r.ok) throw new Error(await r.text());
+    const data = await r.json();
+    attachedDoc = { filename: data.filename, text: data.text };
+
+    // Show badge in toolbar
+    const badge = document.getElementById('attachedDocBadge');
+    badge.style.display = 'flex';
+    badge.innerHTML = `<div class="doc-badge">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      ${esc(data.filename)} (${data.char_count.toLocaleString()} chars)
+      <button onclick="clearDoc()" title="Remove document">&times;</button>
+    </div>`;
+
+    openAIDrawer();
+    const noText = !data.text || data.text.trim().startsWith('[');
+    appendMsg(`📎 Attached: **${data.filename}** (${data.char_count.toLocaleString()} characters extracted)`, 'file');
+    toast(`Document attached: ${data.filename}`, 'success');
+    if (noText) {
+      appendMsg(`I couldn't read text from this file:\n${data.text}`, 'ai');
+    } else if (ollamaOK && currentModel) {
+      appendMsg('Reading the document and filling the invoice…', 'ai');
+      await extractFromDoc();
+    } else {
+      appendMsg('Document loaded. Once the AI engine is ready, click **Auto Generate from Doc** again to extract the invoice details automatically.', 'ai');
+    }
+  } catch(e) { toast('Upload error: '+e.message,'error'); }
+}
+function clearDoc() {
+  attachedDoc = null;
+  document.getElementById('attachedDocBadge').style.display = 'none';
+  toast('Document removed','info');
+}
+
+// ─── Build AI system context ──────────────────────────────────────────────────
+function buildSystemContext() {
+  const f = collectForm();
+  const itemLines = f.items.map((it,i) =>
+    `  ${i+1}. ${it.description} — Qty: ${it.quantity}, Unit: ${fmtCur(it.unit_price)}, Total: ${fmtCur(it.quantity*it.unit_price)}`
+  ).join('\n');
+  const sub = f.items.reduce((s,i) => s + i.quantity*i.unit_price, 0);
+  const tax = sub * (f.tax_rate/100);
+
+  let ctx = `You are an invoice assistant. The user is filling out an invoice form. Current form state:
+
+INVOICE INFO:
+  Invoice #: ${f.invoice_number}
+  Date: ${f.invoice_date}
+  Due Date: ${f.due_date}
+  Currency: ${f.currency}
+  Tax Rate: ${f.tax_rate}%
+
+FROM (Sender):
+  Name/Company: ${f.from_name || '(empty)'}
+  Address: ${f.from_address || '(empty)'}
+  Email: ${f.from_email || '(empty)'}
+  Phone: ${f.from_phone || '(empty)'}
+
+BILL TO (Client):
+  Name/Company: ${f.to_name || '(empty)'}
+  Address: ${f.to_address || '(empty)'}
+  Email: ${f.to_email || '(empty)'}
+  Phone: ${f.to_phone || '(empty)'}
+
+LINE ITEMS:
+${itemLines || '  (none)'}
+
+TOTALS:
+  Subtotal: ${fmtCur(sub)}
+  Tax (${f.tax_rate}%): ${fmtCur(tax)}
+  Total: ${fmtCur(sub + tax)}
+
+NOTES: ${f.notes || '(empty)'}
+
+SERVICE DATES:
+  ${(f.service_dates && f.service_dates.length) ? f.service_dates.join(', ') : '(none)'}`;
+
+  if (attachedDoc) {
+    ctx += `\n\n=== ATTACHED DOCUMENT: "${attachedDoc.filename}" ===
+"""
+${attachedDoc.text}
+"""
+
+To fill the invoice from this document, read the text above and extract REAL values (never invent them). Map what you find:
+- Sender / "from" / your-company details → from_name, from_address, from_email, from_phone
+- Client / customer / "bill to" details → to_name, to_address, to_email, to_phone
+- Invoice number, reference, or PO number → invoice_number
+- Each product/service line → an items[] entry with description, quantity (number), unit_price (number, no currency symbol)
+- Payment terms / remarks → notes
+- Any service or work dates, formatted YYYY-MM-DD → service_dates
+Only include fields you actually found in the document; omit anything not present.`;
+  }
+
+  ctx += `\n\nWhen the user asks you to fill fields or generate data, respond with a JSON block wrapped in triple backticks like:
+\`\`\`json
+{
+  "from_name": "...",
+  "from_address": "...",
+  "from_email": "...",
+  "from_phone": "...",
+  "to_name": "...",
+  "to_address": "...",
+  "to_email": "...",
+  "to_phone": "...",
+  "invoice_number": "...",
+  "notes": "...",
+  "service_dates": ["2024-01-15", "2024-01-16"],
+  "items": [{"description":"...","quantity":1,"unit_price":0}]
+}
+\`\`\`
+Only include fields you are changing. Omit fields that should stay the same.
+For plain answers, just reply in plain text. Keep answers concise and practical.`;
+
+  return ctx;
+}
+
+// ─── Apply AI JSON to form fields ─────────────────────────────────────────────
+function applyAIJson(json) {
+  const f = json;
+  const fieldMap = {
+    from_name:      'fromName',
+    from_address:   'fromAddress',
+    from_email:     'fromEmail',
+    from_phone:     'fromPhone',
+    to_name:        'toName',
+    to_address:     'toAddress',
+    to_email:       'toEmail',
+    to_phone:       'toPhone',
+    invoice_number: 'invoiceNumber',
+    notes:          'notes',
+    tax_rate:       'taxRate',
+    currency:       'currency',
+  };
+  let filled = [];
+  for (const [key, elId] of Object.entries(fieldMap)) {
+    if (f[key] !== undefined && f[key] !== null && String(f[key]).trim() !== '') {
+      document.getElementById(elId).value = f[key];
+      filled.push(key.replace(/_/g,' '));
+    }
+  }
+  if (f.items && Array.isArray(f.items) && f.items.length) {
+    items = []; itemCounter = 0;
+    f.items.forEach(it => addItem(it.description||'', it.quantity||1, it.unit_price||0));
+    filled.push('line items');
+  }
+  if (Array.isArray(f.service_dates)) {
+    serviceDates = new Set(f.service_dates.filter(s => /^\d{4}-\d{2}-\d{2}$/.test(s)));
+    // Hours are optional: use hours the AI found, else the user's default —
+    // and no entry at all when neither exists (never null).
+    serviceHours = new Map();
+    const given = (f.service_hours && typeof f.service_hours === 'object') ? f.service_hours : {};
+    const dh = defaultHours();
+    serviceDates.forEach(iso => {
+      const v = parseFloat(given[iso]);
+      if (v > 0) serviceHours.set(iso, v);
+      else if (dh) serviceHours.set(iso, dh);
+    });
+    const first = sortedServiceDates()[0];
+    if (first) { const [yy, mm] = first.split('-').map(Number); calYear = yy; calMonth = mm - 1; }
+    renderCalendar(); renderServiceDateChips();
+    if (serviceDates.size) filled.push('service dates');
+  }
+  updateTotals();
+  return filled;
+}
+
+// ─── Send AI message ──────────────────────────────────────────────────────────
+async function sendAI() {
+  const input = document.getElementById('aiInput');
+  const prompt = input.value.trim();
+  if (!prompt) return;
+  if (interview.active) {   // interview is offline-safe; no license needed
+    // Guided fill answers bypass the engine check — the interview works
+    // offline and only uses the AI (when present) to parse free text.
+    input.value = '';
+    appendMsg(prompt, 'user');
+    await handleInterviewAnswer(prompt);
+    return;
+  }
+  if (!ollamaOK || !currentModel) {
+    toast('The AI engine is not running or no model is selected.', 'error'); return;
+  }
+  input.value = '';
+  appendMsg(prompt, 'user');
+  await runOllama(prompt);
+}
+
+async function quickAsk(prompt) {
+  if (!ollamaOK || !currentModel) { toast('The AI engine is not running.','error'); return; }
+  openAIDrawer();
+  appendMsg(prompt, 'user');
+  await runOllama(prompt);
+}
+
+async function runOllama(userPrompt) {
+  const typingId = appendTyping();
+  document.getElementById('aiSendBtn').disabled = true;
+  const fullPrompt = buildSystemContext() + '\n\nUser: ' + userPrompt;
+  try {
+    const r = await apiFetch('/api/llm/generate', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ model: currentModel, prompt: fullPrompt })
+    });
+    const data = await r.json();
+    removeTyping(typingId);
+    if (data.response) {
+      const text = data.response.trim();
+      // Try to extract and apply JSON
+      const jsonMatch = text.match(/```json\s*([\s\S]*?)```/);
+      if (jsonMatch) {
+        try {
+          const parsed = JSON.parse(jsonMatch[1]);
+          const filled = applyAIJson(parsed);
+          const preview = text.replace(/```json[\s\S]*?```/g, '').trim();
+          appendMsg((preview || 'Done! I filled in the following fields:') + (filled.length ? '\n\n✓ ' + filled.join('\n✓ ') : ''), 'ai');
+          toast(`Updated: ${filled.join(', ')}`, 'success');
+          if (docFillPending && filled.length) showAIDisclaimer();
+        } catch(e) {
+          appendMsg(text, 'ai');
+        }
+      } else {
+        appendMsg(text, 'ai');
+      }
+    } else if (data.detail) {
+      appendMsg('Error: ' + data.detail, 'ai');
+    }
+  } catch(e) {
+    removeTyping(typingId);
+    appendMsg('Connection error: ' + e.message, 'ai');
+  } finally {
+    docFillPending = false;
+    document.getElementById('aiSendBtn').disabled = false;
+  }
+}
+
+async function fillAllFieldsWithAI() {
+  openAIDrawer();
+  // The guided interview itself works offline/unlicensed (no model calls),
+  // so only doc-extraction needs the license/engine.
+  if (attachedDoc && ollamaOK && currentModel) {
+    if (aiRequiresLicense()) return;
+    return extractFromDoc();
+  }
+  startFillInterview();
+}
+
+// ─── Guided fill interview ────────────────────────────────────────────────────
+// AI Fill All asks for each detail one question at a time in the chat; every
+// step is skippable, answers land in the form immediately. Free-text answers
+// for line items and dates are parsed by the AI when an engine is running,
+// with plain-text heuristics as the offline fallback.
+const interview = { active: false, i: 0 };
+const INTERVIEW_STEPS = [
+  { q: 'Your name or company? (this appears under "From")',
+    apply: v => setFormField('fromName', v) },
+  { q: 'Your address? Separate parts with commas — e.g. "102 Pacific Blvd, Vancouver, BC".',
+    apply: v => setFormField('fromAddress', v.replace(/,\s*/g, '\n')) },
+  { q: 'Your email address?',
+    apply: v => setFormField('fromEmail', v) },
+  { q: 'Your phone number?',
+    apply: v => setFormField('fromPhone', v) },
+  { q: "Now the client — their name or company? (\"Bill To\")",
+    apply: v => setFormField('toName', v) },
+  { q: "The client's address?",
+    apply: v => setFormField('toAddress', v.replace(/,\s*/g, '\n')) },
+  { q: "The client's email?",
+    apply: v => setFormField('toEmail', v) },
+  { q: "The client's phone number?",
+    apply: v => setFormField('toPhone', v) },
+  { q: 'Your line items — e.g. "Logo design 2 x 450, Hosting 120". One per line or comma-separated.',
+    apply: async v => applyItemsAnswer(v) },
+  { q: 'Any notes or payment terms for the invoice?',
+    apply: v => setFormField('notes', v) },
+  { q: 'Service dates, if any — e.g. "Aug 3, 5 and 12" (add "at 3 hours" if you bill hours per day).',
+    apply: async v => applyDatesAnswer(v) },
+];
+
+function setFormField(id, v) {
+  const el = document.getElementById(id);
+  if (el) { el.value = v; }
+  scheduleDraftSave();
+}
+function startFillInterview() {
+  openAIDrawer();
+  interview.active = true;
+  interview.i = 0;
+  appendMsg("Let's fill this invoice together — answer each question, or skip any of them.", 'ai');
+  askInterviewStep();
+}
+function askInterviewStep() {
+  const step = INTERVIEW_STEPS[interview.i];
+  appendMsg(`${interview.i + 1}/${INTERVIEW_STEPS.length} · ${step.q}`, 'ai');
+  appendInterviewControls(interview.i);
+  document.getElementById('aiInput').placeholder = 'Type your answer, or skip…';
+  document.getElementById('aiInput').focus();
+}
+function appendInterviewControls(stepIndex) {
+  const el = document.createElement('div');
+  el.className = 'msg msg-system';
+  el.innerHTML = `<button type="button" class="fill-btn" onclick="interviewSkip(${stepIndex})">Skip</button>
+    <button type="button" class="fill-btn" style="background:var(--surface-hover);color:var(--text-2);" onclick="interviewCancel(${stepIndex})">Stop</button>`;
+  const msgs = document.getElementById('aiMessages');
+  msgs.appendChild(el); msgs.scrollTop = msgs.scrollHeight;
+}
+function interviewSkip(stepIndex) {
+  if (!interview.active || stepIndex !== interview.i) return;
+  advanceInterview();
+}
+function interviewCancel(stepIndex) {
+  if (!interview.active || stepIndex !== interview.i) return;
+  interview.active = false;
+  document.getElementById('aiInput').placeholder = 'Ask AI anything about this invoice...';
+  appendMsg('Stopped — the fields you already answered are saved. Ask me anything else, or restart with AI Fill All.', 'ai');
+}
+function advanceInterview() {
+  interview.i += 1;
+  if (interview.i >= INTERVIEW_STEPS.length) {
+    interview.active = false;
+    document.getElementById('aiInput').placeholder = 'Ask AI anything about this invoice...';
+    updateTotals(); renderCalendar(); renderServiceDateChips();
+    appendMsg('All done — your invoice is filled in. Review the tabs, then press Preview to see the PDF.', 'ai');
+    toast('Invoice filled from your answers', 'success');
+    return;
+  }
+  askInterviewStep();
+}
+async function handleInterviewAnswer(text) {
+  if (/^skip$/i.test(text.trim())) { advanceInterview(); return; }
+  const step = INTERVIEW_STEPS[interview.i];
+  try { await step.apply(text.trim()); } catch (_) {}
+  advanceInterview();
+}
+
+async function aiParse(prompt) {
+  if (!ollamaOK || !currentModel) return null;
+  try {
+    const r = await apiFetch('/api/llm/generate', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: currentModel, prompt })
+    });
+    if (!r.ok) return null;
+    const d = await r.json();
+    const m = (d.response || '').match(/\[[\s\S]*\]/);
+    return m ? JSON.parse(m[0]) : null;
+  } catch (_) { return null; }
+}
+async function applyItemsAnswer(text) {
+  let parsed = await aiParse(
+    'Convert this text into invoice line items as a JSON array like ' +
+    '[{"description":"...","quantity":1,"unit_price":100}]. Reply with ONLY the JSON array.\nText: ' + text);
+  if (!Array.isArray(parsed) || !parsed.length) parsed = heuristicItems(text);
+  items = []; itemCounter = 0;
+  parsed.forEach(it => addItem(String(it.description || '').trim() || 'Service',
+                              parseFloat(it.quantity) > 0 ? parseFloat(it.quantity) : 1,
+                              parseFloat(it.unit_price) >= 0 ? parseFloat(it.unit_price) : 0));
+  appendMsg(`✓ Added ${items.length} line item${items.length > 1 ? 's' : ''}.`, 'ai');
+}
+function heuristicItems(text) {
+  return text.split(/[\n;,]+/).map(part => part.trim()).filter(Boolean).map(part => {
+    let qty = 1, price = 0, desc = part;
+    const qm = part.match(/(\d+(?:\.\d+)?)\s*[x×]/i);
+    if (qm) qty = parseFloat(qm[1]);
+    const nums = part.match(/(\d+(?:\.\d+)?)/g) || [];
+    if (nums.length) price = parseFloat(nums[nums.length - 1]);
+    desc = part.replace(/(\d+(?:\.\d+)?)\s*[x×]/i, '').replace(/(\d+(?:\.\d+)?)\s*$/, '').trim();
+    return { description: desc || part, quantity: qty, unit_price: price };
+  });
+}
+async function applyDatesAnswer(text) {
+  const now = new Date();
+  let parsed = await aiParse(
+    `Today is ${fmt(now)}. Convert this text into service dates as a JSON array like ` +
+    '[{"date":"YYYY-MM-DD","hours":3}] — omit "hours" or use null when no hours are mentioned. ' +
+    'Reply with ONLY the JSON array.\nText: ' + text);
+  if (!Array.isArray(parsed) || !parsed.length) parsed = heuristicDates(text);
+  let added = 0;
+  parsed.forEach(d => {
+    const iso = String(d.date || '').trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return;
+    serviceDates.add(iso);
+    const hrs = parseFloat(d.hours);
+    if (hrs > 0) serviceHours.set(iso, hrs);
+    added++;
+  });
+  if (added) {
+    const first = sortedServiceDates()[0];
+    calYear = +first.slice(0, 4); calMonth = +first.slice(5, 7) - 1;
+    appendMsg(`✓ Added ${added} service date${added > 1 ? 's' : ''}.`, 'ai');
+  } else {
+    appendMsg("I couldn't read dates from that — you can pick them on the Service Dates tab instead.", 'ai');
+  }
+}
+function heuristicDates(text) {
+  const out = [];
+  const hoursMatch = text.match(/at\s+(\d+(?:\.\d+)?)\s*h/i);
+  const hours = hoursMatch ? parseFloat(hoursMatch[1]) : null;
+  (text.match(/\d{4}-\d{2}-\d{2}/g) || []).forEach(iso => out.push({ date: iso, hours }));
+  const months = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
+  const year = new Date().getFullYear();
+  const monthRe = /(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+((?:\d{1,2}(?:st|nd|rd|th)?[,\s]*(?:and\s+)?)+)/gi;
+  let m;
+  while ((m = monthRe.exec(text)) !== null) {
+    const mi = months.indexOf(m[1].toLowerCase());
+    (m[2].match(/\d{1,2}/g) || []).forEach(d => {
+      out.push({ date: `${year}-${String(mi + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`, hours });
+    });
+  }
+  return out;
+}
+// Set while an Auto Generate from Doc extraction is in flight, so the main
+// window shows the accuracy disclaimer once the AI's fill lands.
+let docFillPending = false;
+function showAIDisclaimer() { document.getElementById('aiDisclaimer').classList.add('on'); }
+function hideAIDisclaimer() { document.getElementById('aiDisclaimer').classList.remove('on'); }
+
+function extractFromDoc() {
+  if (!attachedDoc) { toast('No document attached','info'); return; }
+  if (aiRequiresLicense()) return;
+  if (!ollamaOK || !currentModel) { toast('The AI engine is not running.','error'); return; }
+  openAIDrawer();
+  docFillPending = true;
+  return quickAsk(`Extract the invoice details from the attached document "${attachedDoc.filename}" and fill the form. Use ONLY information found in the document — sender, client/bill-to, invoice number, line items (description, quantity, unit price), payment terms/notes, and any service dates. Respond with the JSON fill block.`);
+}
+
+// ─── AI drawer helpers ────────────────────────────────────────────────────────
+function openAIDrawer()  { drawerOpen = true;  document.getElementById('aiDrawer').classList.add('open'); document.getElementById('aiInput').focus(); }
+function closeAIDrawer() { drawerOpen = false; document.getElementById('aiDrawer').classList.remove('open'); }
+function toggleAIDrawer() { drawerOpen ? closeAIDrawer() : openAIDrawer(); }
+
+function appendMsg(text, role) {
+  const el = document.createElement('div');
+  el.className = `msg msg-${role}`;
+  el.textContent = text;
+  const msgs = document.getElementById('aiMessages');
+  msgs.appendChild(el); msgs.scrollTop = msgs.scrollHeight;
+}
+function appendTyping() {
+  const id = 'ty-' + Date.now();
+  const el = document.createElement('div');
+  el.className = 'msg msg-ai'; el.id = id;
+  el.innerHTML = `<span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>`;
+  const msgs = document.getElementById('aiMessages');
+  msgs.appendChild(el); msgs.scrollTop = msgs.scrollHeight;
+  return id;
+}
+function removeTyping(id) { document.getElementById(id)?.remove(); }
+
+// ─── License ──────────────────────────────────────────────────────────────
+// The shell computes the state and pushes entitlements to the backend; the UI
+// reflects the state and forwards activate/deactivate. AI features stay
+// enabled during trial and grace; blocked only when truly lapsed/expired.
+let licenseState = null;
+async function refreshWebLicense() {
+  const key = webLicenseKey();
+  const badge = document.getElementById('licBadge');
+  const detail = document.getElementById('licDetail');
+  const activate = document.getElementById('licActivate');
+  const manage = document.getElementById('licManage');
+  let licensed = false, limit = 5;
+  if (key) {
+    try {
+      const r = await apiFetch('/api/license/check');
+      if (r.ok) { const d = await r.json(); licensed = !!d.licensed; limit = d.ai_daily_limit || limit; }
+    } catch (_) {}
+  }
+  badge.textContent = licensed ? 'Licensed' : 'Free';
+  badge.className = 'lic-badge ' + (licensed ? 'ok' : 'trial');
+  if (licensed) {
+    detail.textContent = `Clean PDFs with no footer · up to ${limit} AI extractions a day.`;
+  } else if (key) {
+    detail.textContent = "That license key wasn't accepted — check it and try again.";
+    try { localStorage.removeItem(WEB_LICENSE_KEY); } catch (_) {}
+  } else {
+    detail.textContent = `Free: PDFs carry a small "Made with autoinvoicegen.com" line and you get ${limit} AI extractions a day. A license removes the line — and the same key unlocks the desktop app.`;
+  }
+  activate.style.display = licensed ? 'none' : '';
+  manage.style.display = licensed ? '' : 'none';
+  document.getElementById('licBuyLink').style.display = licensed ? 'none' : '';
+  if (licensed) document.getElementById('licManaged').innerHTML = `Key <b>${esc(maskKey(key))}</b> is active in this browser.`;
+  document.getElementById('ollamaStatusText').textContent = `Cloud AI ready · ${limit}/day`;
+}
+
+async function refreshLicense() {
+  if (WEB) return refreshWebLicense();
+  if (!window.__TAURI__?.core?.invoke) return;   // browser dev: no licensing
+  try { applyLicense(await window.__TAURI__.core.invoke('license_status')); } catch (_) {}
+}
+const PURCHASE_URL = 'https://autoinvoicegen.com/#pricing';
+function openPurchasePage() {
+  // Packaged app: system browser via the shell; browser dev: a plain tab.
+  const invoke = window.__TAURI__?.core?.invoke;
+  if (invoke) { invoke('open_url', { url: PURCHASE_URL }).catch(() => window.open(PURCHASE_URL)); }
+  else { window.open(PURCHASE_URL, '_blank'); }
+}
+
+function copyMachineId() {
+  const text = document.getElementById('licMachineId').textContent;
+  const done = () => toast('Machine ID copied', 'success');
+  if (navigator.clipboard?.writeText) {
+    navigator.clipboard.writeText(text).then(done).catch(() => fallbackCopy(text, done));
+  } else fallbackCopy(text, done);
+}
+function fallbackCopy(text, done) {
+  const ta = document.createElement('textarea');
+  ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand('copy'); done(); } catch (_) { toast('Select and copy the ID manually', 'info'); }
+  ta.remove();
+}
+function applyLicense(s) {
+  licenseState = s;
+  if (s.machine_id) document.getElementById('licMachineId').textContent = s.machine_id;
+  const badge = document.getElementById('licBadge');
+  const detail = document.getElementById('licDetail');
+  const activate = document.getElementById('licActivate');
+  const manage = document.getElementById('licManage');
+  const labels = { licensed: 'Licensed', grace: 'Licensed', trial: 'Trial',
+                   trial_expired: 'Trial ended', expired: 'Not licensed' };
+  const cls = { licensed: 'ok', grace: 'ok', trial: 'trial', trial_expired: 'warn', expired: 'warn' };
+  badge.textContent = labels[s.status] || s.status;
+  badge.className = 'lic-badge ' + (cls[s.status] || '');
+  detail.textContent = s.detail || '';
+  const licensed = s.status === 'licensed' || s.status === 'grace';
+  activate.style.display = licensed ? 'none' : '';
+  manage.style.display = licensed ? '' : 'none';
+  document.getElementById('licBuyLink').style.display =
+    (s.status === 'trial' || s.status === 'trial_expired' || s.status === 'expired') ? '' : 'none';
+  if (licensed) {
+    document.getElementById('licManaged').innerHTML =
+      `Active on this device${s.email ? ` · <b>${esc(s.email)}</b>` : ''}` +
+      `${s.key_masked ? `<br>Key ${esc(s.key_masked)}` : ''}`;
+  }
+  // Reflect AI availability in the sidebar immediately.
+  if (!s.ai_enabled) {
+    ollamaOK = false; currentModel = '';
+    const dot = document.getElementById('ollamaStatusDot');
+    const txt = document.getElementById('ollamaStatusText');
+    if (dot) dot.className = 'status-dot warn';
+    if (txt) txt.textContent = s.status === 'trial_expired' || s.status === 'expired'
+      ? 'Locked — license required' : 'Unavailable';
+  }
+}
+async function activateLicense() {
+  if (WEB) {
+    const key = document.getElementById('licKeyInput').value.trim();
+    if (!key) { toast('Enter a license key first.', 'error'); return; }
+    try { localStorage.setItem(WEB_LICENSE_KEY, key); } catch (_) {}
+    await refreshWebLicense();
+    toast(webLicenseKey() ? 'License active in this browser.' : 'That key was not accepted.', webLicenseKey() ? 'success' : 'error');
+    return;
+  }
+  const key = document.getElementById('licKeyInput').value.trim();
+  if (!key) { toast('Enter your license key', 'info'); return; }
+  const btn = document.getElementById('licActivateBtn');
+  btn.disabled = true; btn.textContent = 'Activating…';
+  try {
+    const s = await window.__TAURI__.core.invoke('activate_license', { key });
+    applyLicense(s);
+    if (s.status === 'licensed') { toast('License activated', 'success'); document.getElementById('licKeyInput').value = ''; checkOllama(); }
+  } catch (e) {
+    toast('Activation failed: ' + e, 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Activate';
+  }
+}
+async function deactivateLicense() {
+  if (WEB) {
+    try { localStorage.removeItem(WEB_LICENSE_KEY); } catch (_) {}
+    await refreshWebLicense();
+    toast('License key removed from this browser.', 'info');
+    return;
+  }
+  try {
+    const s = await window.__TAURI__.core.invoke('deactivate_license');
+    applyLicense(s);
+    toast('Deactivated on this device', 'info');
+  } catch (e) { toast('Could not deactivate: ' + e, 'error'); }
+}
+// AI actions check the license first so users get a clear prompt, not a 403.
+function aiRequiresLicense() {
+  if (licenseState && !licenseState.ai_enabled) {
+    switchTab(document.querySelector('.tab-btn[data-tab="settings"]'));
+    toast('AI features need an active license or trial — see Settings → License', 'error');
+    return true;
+  }
+  return false;
+}
+
+// ─── Guided tour (first-run onboarding) ──────────────────────────────────────
+// Shown once on first launch, skippable at any step, and replayable from
+// Settings → Help. Completion is remembered in localStorage.
+const TOUR_DONE_KEY = 'aiig-tour-done';
+const TOUR_STEPS = [
+  { title: 'Welcome to Auto Invoice Generator',
+    body: 'Professional invoices with built-in AI that runs fully offline. This quick tour takes about 30 seconds — or skip it and dive right in.',
+    target: null },
+  { title: 'Start here',
+    body: 'New Invoice starts fresh, Load Sample fills realistic example data so you can explore, and Clear Form resets everything.',
+    target: '#navInvoice' },
+  { title: 'Four tabs, one invoice',
+    body: 'Details holds the who-and-when. Line Items your billables. Service Dates is a click-to-select calendar with per-day billed hours. Settings holds the design options.',
+    target: '.tabs-bar', tab: 'details' },
+  { title: 'Preview & export',
+    body: 'Preview renders your actual PDF as page images on the right. Export PDF saves the finished document wherever you choose. Auto Generate from Doc lets the AI build the invoice from an uploaded file.',
+    target: '.toolbar' },
+  { title: 'Your AI assistant',
+    body: 'Ask AI drafts notes and line items, AI Fill All walks you through a quick guided fill, Auto Generate from Doc reads an uploaded file and fills the invoice for you. Local models are optional — download one here to run AI fully offline.',
+    target: '#navAI' },
+  { title: 'Make it yours',
+    body: 'Four invoice templates, six paper colors, currencies including custom ones, tax rate and default hours — every choice here is saved and restored automatically.',
+    target: '#tab-settings .form-card', tab: 'settings' },
+  { title: "You're all set",
+    body: 'Replay this tour anytime from Settings → Help. Now load the sample and press Preview — your first invoice is 10 seconds away.',
+    target: null },
+];
+let tourIndex = -1;
+
+function startTour() {
+  closeAIDrawer();
+  tourIndex = 0;
+  document.getElementById('tourOverlay').classList.add('on');
+  renderTourStep();
+}
+function endTour() {
+  document.getElementById('tourOverlay').classList.remove('on');
+  tourIndex = -1;
+  try { localStorage.setItem(TOUR_DONE_KEY, '1'); } catch (_) {}
+  switchTab(document.querySelector('.tab-btn[data-tab="details"]'));
+}
+function tourStep(delta) {
+  tourIndex += delta;
+  if (tourIndex < 0) tourIndex = 0;
+  if (tourIndex >= TOUR_STEPS.length) { endTour(); return; }
+  renderTourStep();
+}
+function renderTourStep() {
+  const step = TOUR_STEPS[tourIndex];
+  if (step.tab) switchTab(document.querySelector(`.tab-btn[data-tab="${step.tab}"]`));
+  document.getElementById('tourTitle').textContent = step.title;
+  document.getElementById('tourBody').textContent = step.body;
+  document.getElementById('tourCount').textContent = `${tourIndex + 1} / ${TOUR_STEPS.length}`;
+  document.getElementById('tourBack').style.visibility = tourIndex === 0 ? 'hidden' : 'visible';
+  document.getElementById('tourNext').textContent =
+    tourIndex === TOUR_STEPS.length - 1 ? 'Finish' : (tourIndex === 0 ? 'Start tour' : 'Next');
+
+  const ring = document.getElementById('tourRing');
+  const card = document.getElementById('tourCard');
+  const el = step.target ? document.querySelector(step.target) : null;
+  const vw = window.innerWidth, vh = window.innerHeight;
+  document.getElementById('tourOverlay').classList.toggle('dim', !el);
+  if (el) {
+    const r = el.getBoundingClientRect();
+    const pad = 6;
+    Object.assign(ring.style, {
+      top: r.top - pad + 'px', left: r.left - pad + 'px',
+      width: r.width + pad * 2 + 'px', height: r.height + pad * 2 + 'px',
+    });
+    // Card beside or below the target, clamped to the viewport.
+    const cw = 300, ch = card.offsetHeight || 170, gap = 14;
+    let top = r.bottom + gap, left = r.left;
+    if (top + ch > vh - 12) top = Math.max(12, r.top);
+    if (left + cw > vw - 12) left = vw - cw - 12;
+    if (r.right + gap + cw <= vw - 12 && r.width < vw * 0.5) { left = r.right + gap; top = Math.max(12, r.top); }
+    Object.assign(card.style, { top: top + 'px', left: left + 'px' });
+  } else {
+    // No target: full dim, centered card.
+    Object.assign(ring.style, { top: vh / 2 + 'px', left: vw / 2 + 'px', width: '0px', height: '0px' });
+    const ch = card.offsetHeight || 180;
+    Object.assign(card.style, { top: Math.max(12, vh / 2 - ch / 2) + 'px', left: vw / 2 - 150 + 'px' });
+  }
+}
+document.addEventListener('keydown', e => {
+  if (tourIndex < 0) return;
+  if (e.key === 'Escape') endTour();
+  else if (e.key === 'ArrowRight' || e.key === 'Enter') tourStep(1);
+  else if (e.key === 'ArrowLeft') tourStep(-1);
+});
+
+// ─── Toast ────────────────────────────────────────────────────────────────────
+function toast(msg, type='info') {
+  const el = document.createElement('div');
+  el.className = `toast toast-${type}`; el.textContent = msg;
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(() => el.remove(), 3000);
+}
+</script>
+</body>
+</html>

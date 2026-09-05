@@ -216,6 +216,7 @@
   <div class="wrap nav-inner">
     <a class="brand" href="#"><img src="assets/icon.png" alt=""> Auto Invoice Generator</a>
     <div class="nav-links">
+      <a href="/app/">Web app</a>
       <a href="#demo">Demo</a>
       <a href="#privacy">Privacy</a>
       <a href="#ai">AI</a>
@@ -229,15 +230,15 @@
 
 <header>
   <div class="wrap">
-    <span class="eyebrow">Windows · macOS coming soon</span>
+    <span class="eyebrow">Web · Windows · macOS coming soon</span>
     <h1>Professional invoices, generated <em>privately</em> on your computer</h1>
     <p class="sub">A desktop invoicing app with built-in AI that runs entirely on your machine.
     No accounts. No cloud. Your clients and numbers never leave your computer.</p>
     <div class="cta-row">
-      <a class="btn big" href="#download">⬇&nbsp; Download free for Windows</a>
-      <a class="btn big ghost" href="#pricing">See pricing</a>
+      <a class="btn big" href="/app/">Try it free in your browser →</a>
+      <a class="btn big ghost" href="#download">⬇&nbsp; Download for Windows</a>
     </div>
-    <p class="cta-note">Free 14-day trial · Every feature included · No sign-up required</p>
+    <p class="cta-note">Nothing to install · No sign-up · The desktop app runs the AI privately on your own computer</p>
     <div class="ph-badge">
       <span class="ph-light"><a href="https://www.producthunt.com/products/auto-invoice-generator?embed=true&amp;utm_source=badge-featured&amp;utm_medium=badge&amp;utm_campaign=badge-auto-invoice-generator" target="_blank" rel="noopener noreferrer"><img alt="Auto Invoice Generator - Private invoicing with AI that runs on your device | Product Hunt" width="250" height="54" src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1233556&amp;theme=light&amp;t=1787830676459"></a></span>
       <span class="ph-dark"><a href="https://www.producthunt.com/products/auto-invoice-generator?embed=true&amp;utm_source=badge-featured&amp;utm_medium=badge&amp;utm_campaign=badge-auto-invoice-generator" target="_blank" rel="noopener noreferrer"><img alt="Auto Invoice Generator - Private invoicing with AI that runs on your device | Product Hunt" width="250" height="54" src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1233556&amp;theme=dark&amp;t=1787830676459"></a></span>
@@ -279,13 +280,13 @@
     <div class="grid3">
       <div class="card">
         <div class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
-        <h3>Everything stays local</h3>
-        <p>Invoices, clients, and settings live only on your device. There is no account to create and no server that ever sees your data.</p>
+        <h3>Nothing is stored</h3>
+        <p>The desktop app keeps everything on your device. The web version processes your invoice on our server in memory and keeps nothing — no accounts, no database, no history.</p>
       </div>
       <div class="card">
         <div class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M1 9h3M1 15h3M20 9h3M20 15h3"/></svg></div>
-        <h3>AI on your own hardware</h3>
-        <p>The assistant runs open AI models directly on your computer — nothing you type or upload is sent to any AI provider. The model download is optional.</p>
+        <h3>AI where you want it</h3>
+        <p>In the desktop app the AI runs on your own computer — nothing is sent to any provider. The web version uses a cloud model to read your document, then forgets it.</p>
       </div>
       <div class="card">
         <div class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 1l22 22M16.72 11.06A10.94 10.94 0 0 1 19 12.55M5 12.55a10.94 10.94 0 0 1 5.17-2.39M10.71 5.05A16 16 0 0 1 22.58 9M1.42 9a15.91 15.91 0 0 1 4.7-2.88M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/></svg></div>
@@ -406,11 +407,11 @@
     <div class="faq" style="margin-top: 36px;">
       <details>
         <summary>Is my data really private?</summary>
-        <p>Yes — architecturally, not just as a promise. The app is a local program: invoices, client details, and settings are stored on your computer only, and the AI models run on your own processor. The only network calls the app ever makes are downloading the optional AI model, validating a license key when you activate one, and checking for updates.</p>
+        <p>Two honest answers. The <b>desktop app</b> is a local program: invoices, clients, and settings stay on your computer and the AI runs on your own processor — its only network calls are the optional model download, license activation, and update checks. The <b>web version</b> has to process your invoice on our server to render the PDF and run the AI, but it is stateless: nothing you enter is stored, logged, or kept after the response is sent. There are no accounts and no database.</p>
       </details>
       <details>
         <summary>Does the AI need an internet connection or a subscription to an AI provider?</summary>
-        <p>No. The assistant uses open-weights models (like Qwen and IBM Granite) running locally through llama.cpp. You download a model once inside the app — after that, AI features work with the network unplugged, and there's no per-use cost. AI can make mistakes, so the app always asks you to review generated invoices before sending them.</p>
+        <p>In the desktop app, no: it runs open-weights models (Qwen, IBM Granite) locally through llama.cpp — download a model once and AI works with the network unplugged, with no per-use cost. The web version uses a cloud model (a few free extractions a day; more with a license). Either way, AI can make mistakes, so you're always asked to review the invoice before sending it.</p>
       </details>
       <details>
         <summary>What does it run on?</summary>
